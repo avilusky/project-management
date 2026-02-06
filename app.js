@@ -20,10 +20,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         // המתנה לאתחול Firebase
         await db.init();
 
-        // רישום למאזין שינויים
-        db.onDataChange((type) => {
-            refreshCurrentPage();
-        });
+        // המתנה לסנכרון נתונים ראשוני
+        await new Promise(resolve => setTimeout(resolve, 800));
 
         initNavigation();
         initModals();
@@ -35,6 +33,18 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         // חשיפת פונקציה גלובלית לניווט
         window.viewProjectTasks = viewProjectTasks;
+
+        // רישום למאזין שינויים רק אחרי שהכל מוכן, עם debounce
+        let refreshTimer = null;
+        db.onDataChange((type) => {
+            clearTimeout(refreshTimer);
+            refreshTimer = setTimeout(() => {
+                refreshCurrentPage();
+                if (type === 'employees') {
+                    loadEmployees();
+                }
+            }, 300);
+        });
 
         // הסתרת מסך טעינה
         hideLoading();
@@ -419,15 +429,27 @@ async function saveEmployee() {
 // פילטרים
 // ============================================
 
+let isUpdatingFilters = false;
+
 function initFilters() {
     // פילטרי פרויקטים
-    document.getElementById('project-status-filter').addEventListener('change', loadProjects);
-    document.getElementById('project-manager-filter').addEventListener('change', loadProjects);
+    document.getElementById('project-status-filter').addEventListener('change', () => {
+        if (!isUpdatingFilters) loadProjects();
+    });
+    document.getElementById('project-manager-filter').addEventListener('change', () => {
+        if (!isUpdatingFilters) loadProjects();
+    });
 
     // פילטרי משימות
-    document.getElementById('task-project-filter').addEventListener('change', loadTasks);
-    document.getElementById('task-status-filter').addEventListener('change', loadTasks);
-    document.getElementById('task-employee-filter').addEventListener('change', loadTasks);
+    document.getElementById('task-project-filter').addEventListener('change', () => {
+        if (!isUpdatingFilters) loadTasks();
+    });
+    document.getElementById('task-status-filter').addEventListener('change', () => {
+        if (!isUpdatingFilters) loadTasks();
+    });
+    document.getElementById('task-employee-filter').addEventListener('change', () => {
+        if (!isUpdatingFilters) loadTasks();
+    });
 }
 
 // ============================================
@@ -564,18 +586,22 @@ function viewProjectTasks(projectId) {
 // ============================================
 
 function loadProjects() {
-    // טעינת מנהלים לפילטר
+    // טעינת מנהלים לפילטר (תמיד מרענן)
+    isUpdatingFilters = true;
     const managerFilter = document.getElementById('project-manager-filter');
-    if (managerFilter.options.length <= 1) {
-        const managers = db.getManagers();
-        managers.forEach(manager => {
-            managerFilter.innerHTML += `<option value="${manager.id}">${manager.name}</option>`;
-        });
-    }
+    const selectedManagerValue = managerFilter.value;
+    managerFilter.innerHTML = '<option value="all">הכל</option>';
+    const managers = db.getManagers();
+    managers.forEach(manager => {
+        managerFilter.innerHTML += `<option value="${manager.id}">${manager.name}</option>`;
+    });
+    managerFilter.value = selectedManagerValue;
+    if (!managerFilter.value) managerFilter.value = 'all';
+    isUpdatingFilters = false;
 
     // קבלת ערכי פילטר
     const statusFilter = document.getElementById('project-status-filter').value;
-    const selectedManager = document.getElementById('project-manager-filter').value;
+    const selectedManager = managerFilter.value;
 
     // סינון פרויקטים
     let projects = db.getProjectsByStatus(statusFilter);
@@ -640,28 +666,34 @@ function loadProjects() {
 // ============================================
 
 function loadTasks() {
-    // טעינת פרויקטים לפילטר
+    // טעינת פרויקטים לפילטר (תמיד מרענן)
+    isUpdatingFilters = true;
     const projectFilter = document.getElementById('task-project-filter');
-    if (projectFilter.options.length <= 1) {
-        const projects = db.getProjects();
-        projects.forEach(project => {
-            projectFilter.innerHTML += `<option value="${project.id}">${project.name}</option>`;
-        });
-    }
+    const selectedProjectValue = projectFilter.value;
+    projectFilter.innerHTML = '<option value="all">הכל</option>';
+    const projects = db.getProjects();
+    projects.forEach(project => {
+        projectFilter.innerHTML += `<option value="${project.id}">${project.name}</option>`;
+    });
+    projectFilter.value = selectedProjectValue;
+    if (!projectFilter.value) projectFilter.value = 'all';
 
-    // טעינת עובדים לפילטר
+    // טעינת עובדים לפילטר (תמיד מרענן)
     const employeeFilter = document.getElementById('task-employee-filter');
-    if (employeeFilter.options.length <= 1) {
-        const employees = db.getAllWorkersAndManagers();
-        employees.forEach(emp => {
-            employeeFilter.innerHTML += `<option value="${emp.id}">${emp.name}</option>`;
-        });
-    }
+    const selectedEmployeeValue = employeeFilter.value;
+    employeeFilter.innerHTML = '<option value="all">הכל</option>';
+    const employees = db.getAllWorkersAndManagers();
+    employees.forEach(emp => {
+        employeeFilter.innerHTML += `<option value="${emp.id}">${emp.name}</option>`;
+    });
+    employeeFilter.value = selectedEmployeeValue;
+    if (!employeeFilter.value) employeeFilter.value = 'all';
+    isUpdatingFilters = false;
 
     // קבלת ערכי פילטר
-    const selectedProject = document.getElementById('task-project-filter').value;
+    const selectedProject = projectFilter.value;
     const selectedStatus = document.getElementById('task-status-filter').value;
-    const selectedEmployee = document.getElementById('task-employee-filter').value;
+    const selectedEmployee = employeeFilter.value;
 
     // סינון משימות
     let tasks = db.getTasks();
@@ -707,7 +739,6 @@ function loadTasks() {
                             <td class="task-name-cell">${task.name}</td>
                             <td class="task-project-cell">${project ? project.name : 'ללא פרויקט'}</td>
                             <td class="task-assignee-cell">
-                                <span class="task-assignee-avatar">👤</span>
                                 ${assignee ? assignee.name : 'לא הוקצה'}
                             </td>
                             <td><span class="priority-badge priority-${task.priority}">${getPriorityText(task.priority)}</span></td>
