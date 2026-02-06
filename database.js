@@ -25,6 +25,7 @@ class Database {
                 this.db = window.firebaseDB;
                 this.utils = window.firebaseUtils;
                 this.setupRealtimeListeners();
+                this.seedInitialEmployees(); // Seed data if empty
                 this.initialized = true;
                 resolve();
             } else {
@@ -32,11 +33,54 @@ class Database {
                     this.db = window.firebaseDB;
                     this.utils = window.firebaseUtils;
                     this.setupRealtimeListeners();
+                    this.seedInitialEmployees(); // Seed data if empty
                     this.initialized = true;
                     resolve();
                 });
             }
         });
+    }
+
+    async seedInitialEmployees() {
+        const { collection, getDocs, doc, setDoc } = this.utils;
+        const employeesRef = collection(this.db, 'employees');
+        const snapshot = await getDocs(employeesRef);
+
+        if (snapshot.empty) {
+            console.log('Seeding initial employees...');
+            const initialEmployees = [
+                // מנהל חטיבה
+                { id: 'e1', name: 'אבי עובדיה', role: 'מנהל חטיבה', department: 'הנהלה', isManager: true, parentId: null },
+
+                // מנהלי מחלקות
+                { id: 'e2', name: 'אבי לוסקי', role: 'מנהל מחלקת ביטוח סיעודי', department: 'ביטוח סיעודי', isManager: true, parentId: 'e1' },
+                { id: 'e3', name: 'שירה עמיאור', role: 'מנהלת מחלקת ביטוחי בריאות', department: 'ביטוחי בריאות', isManager: true, parentId: 'e1' },
+                { id: 'e4', name: 'בנג\'י רוזמן', role: 'מנהל מחלקת ביקורת בריאות', department: 'ביקורת בריאות', isManager: true, parentId: 'e1' },
+
+                // עובדי מחלקת ביטוח סיעודי
+                { id: 'e5', name: 'עובד 1 - סיעודי', role: 'עובד', department: 'ביטוח סיעודי', isManager: false, parentId: 'e2' },
+                { id: 'e6', name: 'עובד 2 - סיעודי', role: 'עובד', department: 'ביטוח סיעודי', isManager: false, parentId: 'e2' },
+                { id: 'e7', name: 'עובד 3 - סיעודי', role: 'עובד', department: 'ביטוח סיעודי', isManager: false, parentId: 'e2' },
+
+                // עובדי מחלקת ביטוחי בריאות
+                { id: 'e8', name: 'עובד 4 - בריאות', role: 'עובד', department: 'ביטוחי בריאות', isManager: false, parentId: 'e3' },
+                { id: 'e9', name: 'עובד 5 - בריאות', role: 'עובד', department: 'ביטוחי בריאות', isManager: false, parentId: 'e3' },
+                { id: 'e10', name: 'עובד 6 - בריאות', role: 'עובד', department: 'ביטוחי בריאות', isManager: false, parentId: 'e3' },
+
+                // עובדי מחלקת ביקורת בריאות
+                { id: 'e11', name: 'עובד 7 - ביקורת', role: 'עובד', department: 'ביקורת בריאות', isManager: false, parentId: 'e4' },
+                { id: 'e12', name: 'עובד 8 - ביקורת', role: 'עובד', department: 'ביקורת בריאות', isManager: false, parentId: 'e4' },
+                { id: 'e13', name: 'עובד 9 - ביקורת', role: 'עובד', department: 'ביקורת בריאות', isManager: false, parentId: 'e4' }
+            ];
+
+            const promises = initialEmployees.map(emp => {
+                const { id, ...data } = emp;
+                return setDoc(doc(this.db, 'employees', id), { ...data, createdAt: new Date().toISOString() });
+            });
+
+            await Promise.all(promises);
+            console.log('Seeding completed.');
+        }
     }
 
     // הגדרת מאזינים בזמן אמת

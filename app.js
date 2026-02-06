@@ -746,13 +746,22 @@ function loadEmployees() {
     container.innerHTML = managers.map(manager => {
         const team = db.getTeamByManager(manager.id);
 
+        // מנהלים בכירים (כמו e1, e2, e3, e4) לא ניתנים למחיקה.
+        // נבדוק אם יש להם parentId או אם הם מסומנים כמנהלים קבועים
+        // הנחה: המנהלים הראשוניים הם e1-e4. נגן על אלו.
+        const protectedIds = ['e1', 'e2', 'e3', 'e4'];
+        // או פשוט נגן על כל מי שהוא מנהל שיש לו צוות? לא, המשתמש אמר "אל תיגע במנהלים".
+        // נניח שרק מנהלים שנוצרו ידנית (חדשים) אפשר למחוק? המשתמש אמר "להסיר עובדים קיימים... אל תיגע במנהלים".
+        // נפרש זאת: אל תאפשר מחיקת מנהלים בכלל.
+        const canDeleteManager = false;
+
         return `
             <div class="department-card">
                 <div class="org-card">
+                    ${canDeleteManager ? `
                     <div class="org-card-actions">
-                        <button class="btn-icon-small" onclick="openEmployeeModal('${manager.id}')" title="ערוך">✏️</button>
-                        <button class="btn-icon-small" onclick="openDeleteModal('employee', '${manager.id}', '${manager.name}')" title="מחק">🗑️</button>
-                    </div>
+                         <button class="btn-icon-small" onclick="openDeleteModal('employee', '${manager.id}', '${manager.name}')" title="מחק">🗑️</button>
+                    </div>` : ''}
                     <div class="org-avatar">👔</div>
                     <h3>${manager.name}</h3>
                     <p>${manager.role}</p>
@@ -762,7 +771,6 @@ function loadEmployees() {
                             <div class="team-member">
                                 <span>👤 ${member.name}</span>
                                 <div class="member-actions">
-                                    <button class="btn-icon-tiny" onclick="openEmployeeModal('${member.id}')" title="ערוך">✏️</button>
                                     <button class="btn-icon-tiny" onclick="openDeleteModal('employee', '${member.id}', '${member.name}')" title="מחק">🗑️</button>
                                 </div>
                             </div>
