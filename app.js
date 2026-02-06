@@ -174,10 +174,13 @@ function initModals() {
         confirmDelete();
     });
 
-    // כפתור הוספת עובד
-    document.getElementById('add-employee-btn').addEventListener('click', () => {
-        openEmployeeModal();
-    });
+    // כפתור הוספת עובד (אם קיים)
+    const addEmployeeBtn = document.getElementById('add-employee-btn');
+    if (addEmployeeBtn) {
+        addEmployeeBtn.addEventListener('click', () => {
+            openEmployeeModal();
+        });
+    }
 
 }
 
