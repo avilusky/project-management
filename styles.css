@@ -841,50 +841,56 @@ body {
 }
 
 /* =========================================
-   Org Chart (Employees)
+   Org Chart (Grid Layout)
    ========================================= */
 .org-chart {
-    padding: 40px;
+    padding: 20px 20px 40px 20px;
+    /* Reduced top padding */
     display: flex;
     flex-direction: column;
     align-items: center;
+    gap: 24px;
+    /* Reduced gap */
 }
 
+/* Top Level */
 .org-level {
     display: flex;
     justify-content: center;
-    gap: 30px;
+    width: 100%;
+}
+
+.org-level-2 {
+    display: flex;
+    /* Changed to Flex */
+    justify-content: center;
+    gap: 24px;
+    width: 100%;
     flex-wrap: wrap;
 }
 
-.org-connector {
-    width: 3px;
-    height: 40px;
-    background: var(--gradient-primary);
-    margin: 0 auto;
-    position: relative;
+/* Department Card Wrapper */
+.department-card {
+    flex: 0 1 320px;
+    /* Base width 320px, allow shrinking, disallow growing too much */
+    min-width: 280px;
+    max-width: 350px;
+    height: 100%;
 }
 
-.org-connector::before {
-    content: '';
-    position: absolute;
-    bottom: 0;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 600px;
-    height: 3px;
-    background: var(--gradient-primary);
-}
-
+/* Individual card styling */
 .org-card {
     background: var(--bg-card);
     border-radius: var(--radius-lg);
-    padding: 24px 32px;
+    padding: 20px;
+    /* Slightly reduced padding */
     text-align: center;
     border: 1px solid var(--border-color);
-    min-width: 200px;
     transition: all var(--transition-normal);
     box-shadow: var(--shadow-sm);
+    height: 100%;
+    display: flex;
+    flex-direction: column;
 }
 
 .org-card:hover {
@@ -897,6 +903,9 @@ body {
     background: var(--gradient-primary);
     border-color: var(--primary-color);
     color: white;
+    min-width: 280px;
+    padding: 16px 24px;
+    /* Compact padding */
 }
 
 .org-head h3,
@@ -905,8 +914,9 @@ body {
 }
 
 .org-avatar {
-    font-size: 2.5rem;
-    margin-bottom: 12px;
+    font-size: 2rem;
+    /* Slightly smaller avatar */
+    margin-bottom: 8px;
     filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
 }
 
@@ -914,38 +924,23 @@ body {
     font-size: 1.1rem;
     margin-bottom: 4px;
     color: var(--primary-color);
+    font-weight: 700;
 }
 
 .org-card p {
     color: var(--text-secondary);
     font-size: 0.9rem;
-}
-
-.department-card {
-    position: relative;
-}
-
-.department-card::before {
-    content: '';
-    position: absolute;
-    top: -40px;
-    left: 50%;
-    width: 3px;
-    height: 40px;
-    background: var(--gradient-primary);
-}
-
-.department-card .org-card {
-    margin-bottom: 20px;
+    margin-bottom: 12px;
 }
 
 .team-members {
     display: flex;
     flex-direction: column;
     gap: 10px;
-    margin-top: 16px;
-    padding-top: 16px;
+    margin-top: 12px;
+    padding-top: 12px;
     border-top: 1px solid var(--border-color);
+    flex: 1;
 }
 
 .team-member {
@@ -955,10 +950,16 @@ body {
     font-size: 0.9rem;
     transition: all var(--transition-fast);
     color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    border: 1px solid transparent;
 }
 
 .team-member:hover {
     background: #edf2f7;
+    border-color: var(--border-color);
+    transform: translateX(-4px);
 }
 
 /* =========================================
@@ -998,6 +999,7 @@ body {
 
 .modal-small {
     max-width: 400px;
+    text-align: center;
 }
 
 @keyframes slideUp {
@@ -1018,53 +1020,43 @@ body {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    background: #fafbfc;
 }
 
 .modal-header h3 {
-    font-size: 1.2rem;
-    font-weight: 600;
+    font-size: 1.25rem;
     color: var(--primary-color);
+    font-weight: 600;
 }
 
 .close-modal {
     background: none;
     border: none;
-    color: var(--text-muted);
-    font-size: 1.8rem;
+    font-size: 1.5rem;
+    color: var(--text-secondary);
     cursor: pointer;
-    padding: 0;
-    line-height: 1;
     transition: color var(--transition-fast);
 }
 
 .close-modal:hover {
-    color: var(--text-primary);
+    color: var(--danger-color);
 }
 
-.modal-body {
-    padding: 24px;
-}
-
-.modal-body p {
-    color: var(--text-secondary);
-    line-height: 1.6;
-}
-
-/* =========================================
-   Forms
-   ========================================= */
 form {
     padding: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
 }
 
 .form-group {
-    margin-bottom: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    text-align: right;
 }
 
 .form-group label {
-    display: block;
-    margin-bottom: 8px;
+    font-size: 0.9rem;
     font-weight: 500;
     color: var(--text-secondary);
 }
@@ -1072,14 +1064,13 @@ form {
 .form-group input,
 .form-group select,
 .form-group textarea {
-    width: 100%;
-    padding: 12px 16px;
-    background: var(--bg-input);
+    padding: 10px 12px;
     border: 1px solid var(--border-color);
-    border-radius: var(--radius-md);
-    color: var(--text-primary);
+    border-radius: var(--radius-sm);
     font-family: inherit;
-    font-size: 1rem;
+    font-size: 0.95rem;
+    color: var(--text-primary);
+    background: var(--bg-input);
     transition: all var(--transition-fast);
 }
 
@@ -1091,46 +1082,44 @@ form {
     box-shadow: 0 0 0 3px rgba(49, 130, 206, 0.15);
 }
 
-.form-group textarea {
-    resize: vertical;
-    min-height: 80px;
-}
-
 .form-row {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 16px;
+    gap: 20px;
 }
 
 .form-actions {
     display: flex;
-    justify-content: flex-start;
+    justify-content: flex-end;
     gap: 12px;
-    padding-top: 16px;
-    border-top: 1px solid var(--border-color);
-    margin-top: 8px;
+    margin-top: 10px;
 }
 
-/* =========================================
-   Empty States
-   ========================================= */
+.modal-actions {
+    padding: 24px;
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+}
+
+/* Empty State */
 .empty-message {
     text-align: center;
-    padding: 40px 20px;
-    color: var(--text-muted);
-    font-size: 1rem;
+    color: var(--text-secondary);
+    padding: 40px;
+    background: #f8fafc;
+    border-radius: var(--radius-lg);
+    border: 1px dashed var(--border-color);
 }
 
-/* =========================================
-   Scrollbar
-   ========================================= */
+/* Scrollbar */
 ::-webkit-scrollbar {
     width: 8px;
     height: 8px;
 }
 
 ::-webkit-scrollbar-track {
-    background: var(--bg-main);
+    background: #f1f1f1;
 }
 
 ::-webkit-scrollbar-thumb {
@@ -1139,161 +1128,71 @@ form {
 }
 
 ::-webkit-scrollbar-thumb:hover {
-    background: var(--text-muted);
+    background: #a0aec0;
 }
 
-/* =========================================
-   Responsive
-   ========================================= */
 @media (max-width: 1024px) {
     .sidebar {
-        width: 240px;
+        width: 80px;
+    }
+
+    .org-name,
+    .logo h1,
+    .sidebar-footer p,
+    .nav-item span {
+        display: none;
+    }
+
+    .sidebar-header {
+        padding: 20px 10px;
+        display: flex;
+        justify-content: center;
+    }
+
+    .logo {
+        margin: 0;
+    }
+
+    .nav-item {
+        justify-content: center;
+        padding: 16px;
     }
 
     .main-content {
-        margin-right: 240px;
-        padding: 20px;
-    }
-
-    .dashboard-content {
-        grid-template-columns: 1fr;
+        margin-right: 80px;
     }
 }
 
 @media (max-width: 768px) {
+    .app-container {
+        flex-direction: column;
+    }
+
     .sidebar {
-        display: none;
+        width: 100%;
+        height: auto;
+        position: relative;
+        flex-direction: row;
+        align-items: center;
+        padding: 10px 20px;
+        justify-content: space-between;
+    }
+
+    .nav-menu {
+        flex-direction: row;
+        padding: 0;
+    }
+
+    .nav-item {
+        padding: 10px;
     }
 
     .main-content {
         margin-right: 0;
-    }
-
-    .stats-grid {
-        grid-template-columns: repeat(2, 1fr);
+        padding: 20px;
     }
 
     .form-row {
         grid-template-columns: 1fr;
     }
-
-    .projects-grid {
-        grid-template-columns: 1fr;
-    }
-
-    .org-connector::before {
-        width: 100%;
-        max-width: 300px;
-    }
-}
-
-@media (max-width: 480px) {
-    .stats-grid {
-        grid-template-columns: 1fr;
-    }
-
-    .header {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 16px;
-    }
-}
-/* Clickable Elements */
-.clickable-card {
-    cursor: pointer;
-    transition: transform 0.2s, box-shadow 0.2s;
-}
-
-.clickable-card:hover {
-    transform: translateY(-2px);
-    box-shadow: var(--shadow-md);
-}
-
-.clickable-header {
-    cursor: pointer;
-}
-
-.clickable-header:hover .project-card-title h4 {
-    color: var(--secondary-color);
-    text-decoration: underline;
-}
-
-/* Employee Management Styles */
-.checkbox-group {
-    display: grid;
-    grid-template-columns: 24px 1fr;
-    align-items: center;
-    margin-bottom: 0;
-}
-
-.checkbox-group input {
-    height: 18px;
-    width: 18px;
-}
-
-/* Employee Actions */
-.org-card-actions {
-    position: absolute;
-    top: 8px;
-    left: 8px;
-    display: flex;
-    gap: 4px;
-    opacity: 0;
-    transition: opacity 0.2s;
-}
-
-.org-card:hover .org-card-actions {
-    opacity: 1;
-}
-
-.member-actions {
-    display: flex;
-    gap: 4px;
-    opacity: 0;
-    transition: opacity 0.2s;
-    margin-right: auto;
-}
-
-.team-member:hover .member-actions {
-    opacity: 1;
-}
-
-.team-member {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-}
-
-.btn-icon-small {
-    background: white;
-    border: 1px solid var(--border-color);
-    border-radius: 4px;
-    width: 28px;
-    height: 28px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    font-size: 14px;
-    transition: all 0.2s;
-}
-
-.btn-icon-small:hover {
-    background: var(--bg-main);
-    transform: scale(1.1);
-}
-
-.btn-icon-tiny {
-    background: none;
-    border: none;
-    font-size: 12px;
-    cursor: pointer;
-    padding: 2px;
-    opacity: 0.7;
-    transition: all 0.2s;
-}
-
-.btn-icon-tiny:hover {
-    opacity: 1;
-    transform: scale(1.2);
 }

@@ -758,10 +758,6 @@ function loadEmployees() {
         return `
             <div class="department-card">
                 <div class="org-card">
-                    ${canDeleteManager ? `
-                    <div class="org-card-actions">
-                         <button class="btn-icon-small" onclick="openDeleteModal('employee', '${manager.id}', '${manager.name}')" title="מחק">🗑️</button>
-                    </div>` : ''}
                     <div class="org-avatar">👔</div>
                     <h3>${manager.name}</h3>
                     <p>${manager.role}</p>
@@ -770,9 +766,6 @@ function loadEmployees() {
                         ${team.map(member => `
                             <div class="team-member">
                                 <span>👤 ${member.name}</span>
-                                <div class="member-actions">
-                                    <button class="btn-icon-tiny" onclick="openDeleteModal('employee', '${member.id}', '${member.name}')" title="מחק">🗑️</button>
-                                </div>
                             </div>
                         `).join('')}
                     </div>
