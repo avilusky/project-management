@@ -31,8 +31,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         loadDashboard();
         loadEmployees();
 
-        // חשיפת פונקציה גלובלית לניווט
+        // חשיפת פונקציות גלובליות
         window.viewProjectTasks = viewProjectTasks;
+        window.viewTask = viewTask;
 
         // רישום למאזין שינויים רק אחרי שהכל מוכן, עם debounce
         let refreshTimer = null;
@@ -182,6 +183,20 @@ function initModals() {
         });
     }
 
+    // כפתור עריכה במודל תצוגת משימה
+    document.getElementById('task-view-edit-btn').addEventListener('click', () => {
+        const taskId = document.getElementById('task-view-edit-btn').dataset.taskId;
+        closeModal('task-view-modal');
+        openTaskModal(taskId);
+    });
+
+    // כפתור מחיקה במודל תצוגת משימה
+    document.getElementById('task-view-delete-btn').addEventListener('click', () => {
+        const taskId = document.getElementById('task-view-edit-btn').dataset.taskId;
+        const task = db.getTaskById(taskId);
+        closeModal('task-view-modal');
+        openDeleteModal('task', taskId, task ? task.name : '');
+    });
 }
 
 function openModal(modalId) {
@@ -226,12 +241,19 @@ function openTaskModal(taskId = null) {
     const modal = document.getElementById('task-modal');
     const title = document.getElementById('task-modal-title');
     const form = document.getElementById('task-form');
+    const departmentSelect = document.getElementById('task-department');
 
-    // טעינת פרויקטים
-    loadProjectsSelect('task-project');
-
-    // טעינת עובדים
-    loadEmployeesSelect('task-assignee');
+    // הגדרת מאזין לשינוי מחלקה - סינון פרויקטים
+    departmentSelect.onchange = function () {
+        const selectedDept = departmentSelect.value;
+        const currentProjectValue = document.getElementById('task-project').value;
+        loadProjectsSelect('task-project', selectedDept);
+        // נסיון לשמר את הפרויקט הנבחר אם עדיין קיים ברשימה
+        document.getElementById('task-project').value = currentProjectValue;
+        if (!document.getElementById('task-project').value) {
+            document.getElementById('task-project').value = '';
+        }
+    };
 
     if (taskId) {
         // עריכת משימה קיימת
@@ -240,7 +262,21 @@ function openTaskModal(taskId = null) {
         document.getElementById('task-id').value = task.id;
         document.getElementById('task-name').value = task.name;
         document.getElementById('task-description').value = task.description || '';
+
+        // בעריכה - נקבע את המחלקה לפי הפרויקט הנוכחי
+        const project = db.getProjectById(task.projectId);
+        if (project && project.department) {
+            departmentSelect.value = project.department;
+            loadProjectsSelect('task-project', project.department);
+        } else {
+            departmentSelect.value = '';
+            loadProjectsSelect('task-project');
+        }
+
         document.getElementById('task-project').value = task.projectId;
+
+        // טעינת עובדים
+        loadEmployeesSelect('task-assignee');
         document.getElementById('task-assignee').value = task.assigneeId;
         document.getElementById('task-start-date').value = task.startDate;
         document.getElementById('task-due-date').value = task.dueDate;
@@ -252,6 +288,13 @@ function openTaskModal(taskId = null) {
         form.reset();
         document.getElementById('task-id').value = '';
         document.getElementById('task-start-date').value = new Date().toISOString().split('T')[0];
+        departmentSelect.value = '';
+
+        // טעינת כל הפרויקטים (בלי סינון מחלקה)
+        loadProjectsSelect('task-project');
+
+        // טעינת עובדים
+        loadEmployeesSelect('task-assignee');
     }
 
     openModal('task-modal');
@@ -290,6 +333,31 @@ function openEmployeeModal(employeeId = null) {
     }
 
     openModal('employee-modal');
+}
+
+function viewTask(taskId) {
+    const task = db.getTaskById(taskId);
+    if (!task) return;
+
+    const project = db.getProjectById(task.projectId);
+    const assignee = db.getEmployeeById(task.assigneeId);
+    const daysInfo = task.status === 'completed' ? { text: 'הושלם ✓', className: 'normal' } : getDaysRemaining(task.dueDate);
+
+    document.getElementById('task-view-title').textContent = task.name;
+    document.getElementById('task-view-description').textContent = task.description || 'ללא תיאור';
+    document.getElementById('task-view-description').style.display = task.description ? 'block' : 'none';
+    document.getElementById('task-view-project').textContent = project ? project.name : 'ללא פרויקט';
+    document.getElementById('task-view-assignee').textContent = assignee ? assignee.name : 'לא הוקצה';
+    document.getElementById('task-view-start-date').textContent = formatDate(task.startDate);
+    document.getElementById('task-view-due-date').textContent = formatDate(task.dueDate);
+    document.getElementById('task-view-priority').innerHTML = `<span class="priority-badge priority-${task.priority}">${getPriorityText(task.priority)}</span>`;
+    document.getElementById('task-view-status').innerHTML = `<span class="status-badge status-${task.status}">${getTaskStatusText(task.status)}</span>`;
+    document.getElementById('task-view-days').innerHTML = `<span class="days-remaining ${daysInfo.className}">${daysInfo.text}</span>`;
+
+    // שמירת ID לכפתור עריכה
+    document.getElementById('task-view-edit-btn').dataset.taskId = taskId;
+
+    openModal('task-view-modal');
 }
 
 function openDeleteModal(type, id, name) {
@@ -356,10 +424,22 @@ function initForms() {
 
 async function saveProject() {
     const id = document.getElementById('project-id').value;
+    const managerId = document.getElementById('project-manager').value;
+
+    // שיוך מחלקה אוטומטי לפי המנהל שנבחר
+    let department = '';
+    if (managerId) {
+        const manager = db.getEmployeeById(managerId);
+        if (manager) {
+            department = manager.department;
+        }
+    }
+
     const project = {
         name: document.getElementById('project-name').value,
         description: document.getElementById('project-description').value,
-        managerId: document.getElementById('project-manager').value,
+        managerId: managerId,
+        department: department,
         status: document.getElementById('project-status').value,
         startDate: document.getElementById('project-start-date').value,
         endDate: document.getElementById('project-end-date').value
@@ -444,6 +524,13 @@ function initFilters() {
     });
 
     // פילטרי משימות
+    document.getElementById('task-department-filter').addEventListener('change', () => {
+        if (!isUpdatingFilters) {
+            // כשמשנים מחלקה - עדכון רשימת הפרויקטים בפילטר ואז טעינה מחדש
+            updateProjectFilterByDepartment();
+            loadTasks();
+        }
+    });
     document.getElementById('task-project-filter').addEventListener('change', () => {
         if (!isUpdatingFilters) loadTasks();
     });
@@ -453,6 +540,29 @@ function initFilters() {
     document.getElementById('task-employee-filter').addEventListener('change', () => {
         if (!isUpdatingFilters) loadTasks();
     });
+}
+
+// עדכון פילטר פרויקטים לפי מחלקה שנבחרה
+function updateProjectFilterByDepartment() {
+    isUpdatingFilters = true;
+    const departmentFilter = document.getElementById('task-department-filter').value;
+    const projectFilter = document.getElementById('task-project-filter');
+    const selectedProjectValue = projectFilter.value;
+
+    let projects = db.getProjects();
+    if (departmentFilter !== 'all') {
+        projects = projects.filter(p => p.department === departmentFilter);
+    }
+
+    projectFilter.innerHTML = '<option value="all">הכל</option>';
+    projects.forEach(project => {
+        projectFilter.innerHTML += `<option value="${project.id}">${project.name}</option>`;
+    });
+
+    // נסיון לשמר פרויקט נבחר
+    projectFilter.value = selectedProjectValue;
+    if (!projectFilter.value) projectFilter.value = 'all';
+    isUpdatingFilters = false;
 }
 
 // ============================================
@@ -469,9 +579,14 @@ function loadManagersSelect(selectId) {
     });
 }
 
-function loadProjectsSelect(selectId) {
+function loadProjectsSelect(selectId, department = '') {
     const select = document.getElementById(selectId);
-    const projects = db.getActiveProjects();
+    let projects = db.getActiveProjects();
+
+    // סינון לפי מחלקה אם נבחרה
+    if (department) {
+        projects = projects.filter(p => p.department === department);
+    }
 
     select.innerHTML = '<option value="">בחר פרויקט</option>';
     projects.forEach(project => {
@@ -669,12 +784,18 @@ function loadProjects() {
 // ============================================
 
 function loadTasks() {
-    // טעינת פרויקטים לפילטר (תמיד מרענן)
+    // טעינת פרויקטים לפילטר (תמיד מרענן) - עם סינון לפי מחלקה
     isUpdatingFilters = true;
+    const departmentFilter = document.getElementById('task-department-filter');
+    const selectedDepartment = departmentFilter.value;
+
     const projectFilter = document.getElementById('task-project-filter');
     const selectedProjectValue = projectFilter.value;
     projectFilter.innerHTML = '<option value="all">הכל</option>';
-    const projects = db.getProjects();
+    let projects = db.getProjects();
+    if (selectedDepartment !== 'all') {
+        projects = projects.filter(p => p.department === selectedDepartment);
+    }
     projects.forEach(project => {
         projectFilter.innerHTML += `<option value="${project.id}">${project.name}</option>`;
     });
@@ -728,7 +849,6 @@ function loadTasks() {
                     <th>תאריך יעד</th>
                     <th>ימים נותרים</th>
                     <th>סטטוס</th>
-                    <th>פעולות</th>
                 </tr>
             </thead>
             <tbody>
@@ -738,7 +858,7 @@ function loadTasks() {
         const daysInfo = task.status === 'completed' ? { text: 'הושלם ✓', className: 'normal' } : getDaysRemaining(task.dueDate);
 
         return `
-                        <tr>
+                        <tr class="task-row-clickable" onclick="viewTask('${task.id}')">
                             <td class="task-name-cell">${task.name}</td>
                             <td class="task-project-cell">${project ? project.name : 'ללא פרויקט'}</td>
                             <td class="task-assignee-cell">
@@ -748,10 +868,6 @@ function loadTasks() {
                             <td class="task-date-cell">${formatDate(task.dueDate)}</td>
                             <td><span class="days-remaining ${daysInfo.className}">${daysInfo.text}</span></td>
                             <td><span class="status-badge status-${task.status}">${getTaskStatusText(task.status)}</span></td>
-                            <td class="task-actions">
-                                <button class="btn btn-secondary btn-icon" onclick="openTaskModal('${task.id}')" title="ערוך">✏️</button>
-                                <button class="btn btn-secondary btn-icon" onclick="openDeleteModal('task', '${task.id}', '${task.name}')" title="מחק">🗑️</button>
-                            </td>
                         </tr>
                     `;
     }).join('')}

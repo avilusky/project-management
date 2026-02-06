@@ -792,8 +792,12 @@ body {
     font-size: 0.88rem;
 }
 
-.tasks-table tr:hover td {
-    background: rgba(79, 124, 255, 0.02);
+.task-row-clickable {
+    cursor: pointer;
+}
+
+.task-row-clickable:hover td {
+    background: rgba(79, 124, 255, 0.04);
 }
 
 .tasks-table tr:last-child td {
@@ -1122,6 +1126,63 @@ form {
     display: flex;
     justify-content: center;
     gap: 10px;
+}
+
+/* =========================================
+   Task View Modal
+   ========================================= */
+.task-view-modal-content {
+    max-width: 90vw;
+    width: 100%;
+}
+
+.task-view-body {
+    padding: 20px;
+}
+
+.task-view-description {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    line-height: 1.7;
+    margin-bottom: 18px;
+    padding: 12px 14px;
+    background: var(--bg-card-hover);
+    border-radius: var(--radius-sm);
+    border-bottom: 1px solid var(--border-color);
+    white-space: pre-wrap;
+    word-wrap: break-word;
+}
+
+.task-view-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 18px;
+}
+
+.task-view-field {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.task-view-label {
+    font-size: 0.78rem;
+    font-weight: 500;
+    color: var(--text-muted);
+}
+
+.task-view-value {
+    font-size: 0.9rem;
+    color: var(--text-primary);
+    font-weight: 500;
+}
+
+.task-view-actions {
+    padding: 14px 20px;
+    border-top: 1px solid var(--border-color);
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
 }
 
 /* Empty State */

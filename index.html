@@ -166,6 +166,15 @@
 
                 <div class="filters-bar">
                     <div class="filter-group">
+                        <label>מחלקה:</label>
+                        <select id="task-department-filter">
+                            <option value="all">הכל</option>
+                            <option value="ביטוח סיעודי">ביטוח סיעודי</option>
+                            <option value="ביטוחי בריאות">ביטוחי בריאות</option>
+                            <option value="ביקורת בריאות">ביקורת בריאות</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
                         <label>פרויקט:</label>
                         <select id="task-project-filter">
                             <option value="all">הכל</option>
@@ -287,6 +296,15 @@
                     <label for="task-description">תיאור</label>
                     <textarea id="task-description" rows="3"></textarea>
                 </div>
+                <div class="form-group">
+                    <label for="task-department">מחלקה</label>
+                    <select id="task-department">
+                        <option value="">כל המחלקות</option>
+                        <option value="ביטוח סיעודי">ביטוח סיעודי</option>
+                        <option value="ביטוחי בריאות">ביטוחי בריאות</option>
+                        <option value="ביקורת בריאות">ביקורת בריאות</option>
+                    </select>
+                </div>
                 <div class="form-row">
                     <div class="form-group">
                         <label for="task-project">פרויקט</label>
@@ -334,6 +352,55 @@
                     <button type="submit" class="btn btn-primary">שמור</button>
                 </div>
             </form>
+        </div>
+    </div>
+
+    <!-- Modal for Task View -->
+    <div id="task-view-modal" class="modal">
+        <div class="modal-content task-view-modal-content">
+            <div class="modal-header">
+                <h3 id="task-view-title">פרטי משימה</h3>
+                <button class="close-modal" data-modal="task-view-modal">&times;</button>
+            </div>
+            <div class="task-view-body">
+                <div id="task-view-description" class="task-view-description"></div>
+                <div class="task-view-grid">
+                    <div class="task-view-field">
+                        <span class="task-view-label">פרויקט</span>
+                        <span class="task-view-value" id="task-view-project"></span>
+                    </div>
+                    <div class="task-view-field">
+                        <span class="task-view-label">עובד אחראי</span>
+                        <span class="task-view-value" id="task-view-assignee"></span>
+                    </div>
+                    <div class="task-view-field">
+                        <span class="task-view-label">תאריך התחלה</span>
+                        <span class="task-view-value" id="task-view-start-date"></span>
+                    </div>
+                    <div class="task-view-field">
+                        <span class="task-view-label">תאריך יעד</span>
+                        <span class="task-view-value" id="task-view-due-date"></span>
+                    </div>
+                    <div class="task-view-field">
+                        <span class="task-view-label">עדיפות</span>
+                        <span id="task-view-priority"></span>
+                    </div>
+                    <div class="task-view-field">
+                        <span class="task-view-label">סטטוס</span>
+                        <span id="task-view-status"></span>
+                    </div>
+                    <div class="task-view-field">
+                        <span class="task-view-label">ימים נותרים</span>
+                        <span id="task-view-days"></span>
+                    </div>
+                </div>
+            </div>
+            <div class="task-view-actions">
+                <button class="btn btn-danger" id="task-view-delete-btn">🗑️ מחק</button>
+                <div style="flex:1"></div>
+                <button class="btn btn-secondary close-modal" data-modal="task-view-modal">סגור</button>
+                <button class="btn btn-primary" id="task-view-edit-btn">✏️ ערוך</button>
+            </div>
         </div>
     </div>
 
