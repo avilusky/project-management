@@ -195,6 +195,12 @@
 
             <!-- Employees Page -->
             <div id="employees-page" class="page">
+                <div class="page-actions">
+                    <button class="btn btn-primary" id="add-employee-btn">
+                        <span>➕</span> עובד חדש
+                    </button>
+                </div>
+
                 <div class="org-chart">
                     <div class="org-level org-level-1">
                         <div class="org-card org-head">
@@ -327,6 +333,54 @@
                 </div>
                 <div class="form-actions">
                     <button type="button" class="btn btn-secondary close-modal" data-modal="task-modal">ביטול</button>
+                    <button type="submit" class="btn btn-primary">שמור</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal for Employees -->
+    <div id="employee-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="employee-modal-title">עובד חדש</h3>
+                <button class="close-modal" data-modal="employee-modal">&times;</button>
+            </div>
+            <form id="employee-form">
+                <input type="hidden" id="employee-id">
+                <div class="form-group">
+                    <label for="employee-name">שם מלא</label>
+                    <input type="text" id="employee-name" required>
+                </div>
+                <div class="form-group">
+                    <label for="employee-role">תפקיד</label>
+                    <input type="text" id="employee-role" required>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="employee-department">מחלקה</label>
+                        <select id="employee-department" required>
+                            <option value="">בחר מחלקה</option>
+                            <option value="הנהלה">הנהלה</option>
+                            <option value="ביטוח סיעודי">ביטוח סיעודי</option>
+                            <option value="ביטוחי בריאות">ביטוחי בריאות</option>
+                            <option value="ביקורת בריאות">ביקורת בריאות</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="employee-manager">מנהל ישיר</label>
+                    <select id="employee-manager">
+                        <option value="">ללא מנהל (מנהל חטיבה)</option>
+                    </select>
+                </div>
+                <div class="form-group checkbox-group">
+                    <input type="checkbox" id="employee-is-manager">
+                    <label for="employee-is-manager">האם זה מנהל?</label>
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn btn-secondary close-modal"
+                        data-modal="employee-modal">ביטול</button>
                     <button type="submit" class="btn btn-primary">שמור</button>
                 </div>
             </form>

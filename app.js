@@ -163,6 +163,12 @@ function initModals() {
     document.getElementById('confirm-delete-btn').addEventListener('click', () => {
         confirmDelete();
     });
+
+    // כפתור הוספת עובד
+    document.getElementById('add-employee-btn').addEventListener('click', () => {
+        openEmployeeModal();
+    });
+
 }
 
 function openModal(modalId) {
@@ -238,13 +244,53 @@ function openTaskModal(taskId = null) {
     openModal('task-modal');
 }
 
+function openEmployeeModal(employeeId = null) {
+    const modal = document.getElementById('employee-modal');
+    const title = document.getElementById('employee-modal-title');
+    const form = document.getElementById('employee-form');
+
+    // טעינת מנהלים (חוץ מהעובד עצמו אם בעריכה)
+    const select = document.getElementById('employee-manager');
+    const managers = db.getAllManagers();
+
+    select.innerHTML = '<option value="">ללא מנהל (מנהל חטיבה)</option>';
+    managers.forEach(manager => {
+        if (employeeId && manager.id === employeeId) return; // לא יכול להיות מנהל של עצמו
+        select.innerHTML += `<option value="${manager.id}">${manager.name}</option>`;
+    });
+
+    if (employeeId) {
+        // עריכה
+        const emp = db.getEmployeeById(employeeId);
+        title.textContent = 'עריכת עובד';
+        document.getElementById('employee-id').value = emp.id;
+        document.getElementById('employee-name').value = emp.name;
+        document.getElementById('employee-role').value = emp.role;
+        document.getElementById('employee-department').value = emp.department;
+        document.getElementById('employee-manager').value = emp.parentId || '';
+        document.getElementById('employee-is-manager').checked = emp.isManager;
+    } else {
+        // חדש
+        title.textContent = 'עובד חדש';
+        form.reset();
+        document.getElementById('employee-id').value = '';
+    }
+
+    openModal('employee-modal');
+}
+
 function openDeleteModal(type, id, name) {
     currentDeleteType = type;
     currentDeleteTarget = id;
 
-    const message = type === 'project'
-        ? `האם אתה בטוח שברצונך למחוק את הפרויקט "${name}"? כל המשימות הקשורות אליו יימחקו גם כן.`
-        : `האם אתה בטוח שברצונך למחוק את המשימה "${name}"?`;
+    let message = '';
+    if (type === 'project') {
+        message = `האם אתה בטוח שברצונך למחוק את הפרויקט "${name}"? כל המשימות הקשורות אליו יימחקו גם כן.`;
+    } else if (type === 'task') {
+        message = `האם אתה בטוח שברצונך למחוק את המשימה "${name}"?`;
+    } else if (type === 'employee') {
+        message = `האם אתה בטוח שברצונך למחוק את העובד "${name}"?`;
+    }
 
     document.getElementById('delete-message').textContent = message;
     openModal('delete-modal');
@@ -256,7 +302,10 @@ async function confirmDelete() {
             await db.deleteProject(currentDeleteTarget);
         } else if (currentDeleteType === 'task') {
             await db.deleteTask(currentDeleteTarget);
+        } else if (currentDeleteType === 'employee') {
+            await db.deleteEmployee(currentDeleteTarget);
         }
+
     } catch (error) {
         console.error('Error deleting:', error);
         alert('שגיאה במחיקה. נסה שוב.');
@@ -283,7 +332,14 @@ function initForms() {
         e.preventDefault();
         await saveTask();
     });
+
+    // טופס עובד
+    document.getElementById('employee-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        await saveEmployee();
+    });
 }
+
 
 async function saveProject() {
     const id = document.getElementById('project-id').value;
@@ -334,6 +390,30 @@ async function saveTask() {
         alert('שגיאה בשמירה. נסה שוב.');
     }
 }
+
+async function saveEmployee() {
+    const id = document.getElementById('employee-id').value;
+    const employee = {
+        name: document.getElementById('employee-name').value,
+        role: document.getElementById('employee-role').value,
+        department: document.getElementById('employee-department').value,
+        parentId: document.getElementById('employee-manager').value || null,
+        isManager: document.getElementById('employee-is-manager').checked
+    };
+
+    try {
+        if (id) {
+            await db.updateEmployee(id, employee);
+        } else {
+            await db.addEmployee(employee);
+        }
+        closeModal('employee-modal');
+    } catch (error) {
+        console.error('Error saving employee:', error);
+        alert('שגיאה בשמירה. נסה שוב.');
+    }
+}
+
 
 // ============================================
 // פילטרים
@@ -654,12 +734,25 @@ function loadEmployees() {
     const container = document.getElementById('departments-container');
     const managers = db.getManagers();
 
+    if (managers.length === 0) {
+        // אם אין מנהלים, נציג את כל העובדים שאין להם מנהל (או שכולם טרם נטענו)
+        const allEmployees = db.getAllWorkersAndManagers();
+        if (allEmployees.length === 0) {
+            container.innerHTML = '<p class="empty-message">אין עובדים להצגה</p>';
+            return;
+        }
+    }
+
     container.innerHTML = managers.map(manager => {
         const team = db.getTeamByManager(manager.id);
 
         return `
             <div class="department-card">
                 <div class="org-card">
+                    <div class="org-card-actions">
+                        <button class="btn-icon-small" onclick="openEmployeeModal('${manager.id}')" title="ערוך">✏️</button>
+                        <button class="btn-icon-small" onclick="openDeleteModal('employee', '${manager.id}', '${manager.name}')" title="מחק">🗑️</button>
+                    </div>
                     <div class="org-avatar">👔</div>
                     <h3>${manager.name}</h3>
                     <p>${manager.role}</p>
@@ -667,7 +760,11 @@ function loadEmployees() {
                     <div class="team-members">
                         ${team.map(member => `
                             <div class="team-member">
-                                👤 ${member.name}
+                                <span>👤 ${member.name}</span>
+                                <div class="member-actions">
+                                    <button class="btn-icon-tiny" onclick="openEmployeeModal('${member.id}')" title="ערוך">✏️</button>
+                                    <button class="btn-icon-tiny" onclick="openDeleteModal('employee', '${member.id}', '${member.name}')" title="מחק">🗑️</button>
+                                </div>
                             </div>
                         `).join('')}
                     </div>

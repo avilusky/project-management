@@ -1217,3 +1217,83 @@ form {
     color: var(--secondary-color);
     text-decoration: underline;
 }
+
+/* Employee Management Styles */
+.checkbox-group {
+    display: grid;
+    grid-template-columns: 24px 1fr;
+    align-items: center;
+    margin-bottom: 0;
+}
+
+.checkbox-group input {
+    height: 18px;
+    width: 18px;
+}
+
+/* Employee Actions */
+.org-card-actions {
+    position: absolute;
+    top: 8px;
+    left: 8px;
+    display: flex;
+    gap: 4px;
+    opacity: 0;
+    transition: opacity 0.2s;
+}
+
+.org-card:hover .org-card-actions {
+    opacity: 1;
+}
+
+.member-actions {
+    display: flex;
+    gap: 4px;
+    opacity: 0;
+    transition: opacity 0.2s;
+    margin-right: auto;
+}
+
+.team-member:hover .member-actions {
+    opacity: 1;
+}
+
+.team-member {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.btn-icon-small {
+    background: white;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 14px;
+    transition: all 0.2s;
+}
+
+.btn-icon-small:hover {
+    background: var(--bg-main);
+    transform: scale(1.1);
+}
+
+.btn-icon-tiny {
+    background: none;
+    border: none;
+    font-size: 12px;
+    cursor: pointer;
+    padding: 2px;
+    opacity: 0.7;
+    transition: all 0.2s;
+}
+
+.btn-icon-tiny:hover {
+    opacity: 1;
+    transform: scale(1.2);
+}

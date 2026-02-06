@@ -4,35 +4,6 @@
  */
 
 // ============================================
-// נתוני עובדים (קבועים - לא משתנים)
-// ============================================
-
-const employeesData = [
-    // מנהל חטיבה
-    { id: 'e1', name: 'אבי עובדיה', role: 'מנהל חטיבה', department: 'הנהלה', isManager: true, parentId: null },
-
-    // מנהלי מחלקות
-    { id: 'e2', name: 'אבי לוסקי', role: 'מנהל מחלקת ביטוח סיעודי', department: 'ביטוח סיעודי', isManager: true, parentId: 'e1' },
-    { id: 'e3', name: 'שירה עמיאור', role: 'מנהלת מחלקת ביטוחי בריאות', department: 'ביטוחי בריאות', isManager: true, parentId: 'e1' },
-    { id: 'e4', name: 'בנג\'י רוזמן', role: 'מנהל מחלקת ביקורת בריאות', department: 'ביקורת בריאות', isManager: true, parentId: 'e1' },
-
-    // עובדי מחלקת ביטוח סיעודי
-    { id: 'e5', name: 'עובד 1 - סיעודי', role: 'עובד', department: 'ביטוח סיעודי', isManager: false, parentId: 'e2' },
-    { id: 'e6', name: 'עובד 2 - סיעודי', role: 'עובד', department: 'ביטוח סיעודי', isManager: false, parentId: 'e2' },
-    { id: 'e7', name: 'עובד 3 - סיעודי', role: 'עובד', department: 'ביטוח סיעודי', isManager: false, parentId: 'e2' },
-
-    // עובדי מחלקת ביטוחי בריאות
-    { id: 'e8', name: 'עובד 4 - בריאות', role: 'עובד', department: 'ביטוחי בריאות', isManager: false, parentId: 'e3' },
-    { id: 'e9', name: 'עובד 5 - בריאות', role: 'עובד', department: 'ביטוחי בריאות', isManager: false, parentId: 'e3' },
-    { id: 'e10', name: 'עובד 6 - בריאות', role: 'עובד', department: 'ביטוחי בריאות', isManager: false, parentId: 'e3' },
-
-    // עובדי מחלקת ביקורת בריאות
-    { id: 'e11', name: 'עובד 7 - ביקורת', role: 'עובד', department: 'ביקורת בריאות', isManager: false, parentId: 'e4' },
-    { id: 'e12', name: 'עובד 8 - ביקורת', role: 'עובד', department: 'ביקורת בריאות', isManager: false, parentId: 'e4' },
-    { id: 'e13', name: 'עובד 9 - ביקורת', role: 'עובד', department: 'ביקורת בריאות', isManager: false, parentId: 'e4' }
-];
-
-// ============================================
 // Database Class - Firebase Firestore
 // ============================================
 
@@ -40,7 +11,7 @@ class Database {
     constructor() {
         this.db = null;
         this.utils = null;
-        this.employees = employeesData;
+        this.employees = [];
         this.projects = [];
         this.tasks = [];
         this.initialized = false;
@@ -91,6 +62,16 @@ class Database {
             }));
             this.notifyListeners('tasks');
         });
+
+        // מאזין לעובדים
+        const employeesQuery = query(collection(this.db, 'employees'));
+        onSnapshot(employeesQuery, (snapshot) => {
+            this.employees = snapshot.docs.map(doc => ({
+                id: doc.id,
+                ...doc.data()
+            }));
+            this.notifyListeners('employees');
+        });
     }
 
     // רישום מאזינים לשינויים
@@ -103,7 +84,7 @@ class Database {
     }
 
     // ============================================
-    // פעולות עובדים (מקומי - לא ב-Firebase)
+    // פעולות עובדים (Firebase)
     // ============================================
 
     getEmployees() {
@@ -111,7 +92,13 @@ class Database {
     }
 
     getManagers() {
-        return this.employees.filter(e => e.isManager && e.parentId === 'e1');
+        // מנהלי מחלקות (כפופים למנהל חטיבה)
+        // בהנחה שמנהל חטיבה הוא המנהל העליון ומזהה אותו ידוע או שהוא היחיד בלי הורה
+        // כאן נניח שמי שיש לו isManager=true הוא מנהל
+        const divisionHead = this.employees.find(e => !e.parentId);
+        if (!divisionHead) return this.employees.filter(e => e.isManager);
+
+        return this.employees.filter(e => e.isManager && e.parentId === divisionHead.id);
     }
 
     getAllManagers() {
@@ -131,7 +118,55 @@ class Database {
     }
 
     getAllWorkersAndManagers() {
-        return this.employees.filter(e => e.id !== 'e1');
+        // מחזיר את כולם חוץ ממנהל החטיבה (אם רוצים לסנן אותו)
+        // או פשוט את כולם
+        return this.employees;
+    }
+
+    async addEmployee(employee) {
+        const { collection, addDoc } = this.utils;
+        employee.createdAt = new Date().toISOString();
+        const docRef = await addDoc(collection(this.db, 'employees'), employee);
+        return { id: docRef.id, ...employee };
+    }
+
+    async updateEmployee(id, updates) {
+        const { doc, updateDoc } = this.utils;
+        const empRef = doc(this.db, 'employees', id);
+        await updateDoc(empRef, updates);
+        return { id, ...updates };
+    }
+
+    async deleteEmployee(id) {
+        const { doc, deleteDoc, collection, getDocs, query, where, updateDoc } = this.utils;
+
+        // 1. עדכון עובדים שכפופים לעובד שנמחק (הסרת המנהל שלהם)
+        const teamQuery = query(collection(this.db, 'employees'), where('parentId', '==', id));
+        const teamSnapshot = await getDocs(teamQuery);
+        const updatepromises = teamSnapshot.docs.map(empDoc =>
+            updateDoc(doc(this.db, 'employees', empDoc.id), { parentId: null })
+        );
+        await Promise.all(updatepromises);
+
+        // 2. עדכון פרויקטים שהעובד מנהל (הסרת המנהל)
+        const projectsQuery = query(collection(this.db, 'projects'), where('managerId', '==', id));
+        const projectsSnapshot = await getDocs(projectsQuery);
+        const projectPromises = projectsSnapshot.docs.map(pDoc =>
+            updateDoc(doc(this.db, 'projects', pDoc.id), { managerId: null })
+        );
+        await Promise.all(projectPromises);
+
+        // 3. עדכון משימות שהעובד אחראי עליהן (הסרת האחראי)
+        const tasksQuery = query(collection(this.db, 'tasks'), where('assigneeId', '==', id));
+        const tasksSnapshot = await getDocs(tasksQuery);
+        const taskPromises = tasksSnapshot.docs.map(tDoc =>
+            updateDoc(doc(this.db, 'tasks', tDoc.id), { assigneeId: null })
+        );
+        await Promise.all(taskPromises);
+
+        // 4. מחיקת העובד
+        await deleteDoc(doc(this.db, 'employees', id));
+        return true;
     }
 
     // ============================================
