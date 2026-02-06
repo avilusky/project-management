@@ -25,7 +25,7 @@ class Database {
                 this.db = window.firebaseDB;
                 this.utils = window.firebaseUtils;
                 this.setupRealtimeListeners();
-                this.enforceManagers(); // Enforce core data integrity
+                this.resetAndSeedFixedData(); // Reset and seed fixed data
                 this.initialized = true;
                 resolve();
             } else {
@@ -33,7 +33,7 @@ class Database {
                     this.db = window.firebaseDB;
                     this.utils = window.firebaseUtils;
                     this.setupRealtimeListeners();
-                    this.enforceManagers(); // Enforce core data integrity
+                    this.resetAndSeedFixedData(); // Reset and seed fixed data
                     this.initialized = true;
                     resolve();
                 });
@@ -41,27 +41,49 @@ class Database {
         });
     }
 
-    async enforceManagers() {
-        // פונקציה זו רצה בטעינה ומוודאת שהמנהלים הבכירים קיימים תמיד
-        const { doc, setDoc } = this.utils;
+    async resetAndSeedFixedData() {
+        // פונקציה זו מוחקת את כל העובדים ויוצרת מחדש את הרשימה הקבועה
+        const { doc, setDoc, collection, getDocs, deleteDoc } = this.utils;
 
-        console.log('Enforcing core managers data...');
-        const managers = [
-            // מנהל חטיבה
+        console.log('Resetting and seeding fixed employee data...');
+
+        // 1. מחיקת כל העובדים הקיימים
+        const employeesRef = collection(this.db, 'employees');
+        const snapshot = await getDocs(employeesRef);
+        const deletePromises = snapshot.docs.map(d => deleteDoc(doc(this.db, 'employees', d.id)));
+        await Promise.all(deletePromises);
+
+        // 2. הגדרת הרשימה הקבועה
+        const fixedEmployees = [
+            // מנהל חטיבה (חייב להישאר כדי לשמור על המבנה)
             { id: 'e1', name: 'אבי עובדיה', role: 'מנהל חטיבה', department: 'הנהלה', isManager: true, parentId: null },
 
-            // מנהלי מחלקות
+            // מחלקת ביטוח סיעודי
             { id: 'e2', name: 'אבי לוסקי', role: 'מנהל מחלקת ביטוח סיעודי', department: 'ביטוח סיעודי', isManager: true, parentId: 'e1' },
+            { id: 'e2_1', name: 'דותן כהן', role: 'עובד', department: 'ביטוח סיעודי', isManager: false, parentId: 'e2' },
+            { id: 'e2_2', name: 'שרה נקמולי', role: 'עובד', department: 'ביטוח סיעודי', isManager: false, parentId: 'e2' },
+            { id: 'e2_3', name: 'עובד חדש 1', role: 'עובד', department: 'ביטוח סיעודי', isManager: false, parentId: 'e2' },
+
+            // מחלקת ביטוחי בריאות
             { id: 'e3', name: 'שירה עמיאור', role: 'מנהלת מחלקת ביטוחי בריאות', department: 'ביטוחי בריאות', isManager: true, parentId: 'e1' },
-            { id: 'e4', name: 'בנג\'י רוזמן', role: 'מנהל מחלקת ביקורת בריאות', department: 'ביקורת בריאות', isManager: true, parentId: 'e1' }
+            { id: 'e3_1', name: 'מיכל צ\'רנוביל', role: 'עובד', department: 'ביטוחי בריאות', isManager: false, parentId: 'e3' },
+            { id: 'e3_2', name: 'עובד חדש 2', role: 'עובד', department: 'ביטוחי בריאות', isManager: false, parentId: 'e3' },
+            { id: 'e3_3', name: 'עובד חדש 3', role: 'עובד', department: 'ביטוחי בריאות', isManager: false, parentId: 'e3' },
+
+            // מחלקת ביקורת בריאות
+            { id: 'e4', name: 'בנג\'י רוזמן', role: 'מנהל מחלקת ביקורת בריאות', department: 'ביקורת בריאות', isManager: true, parentId: 'e1' },
+            { id: 'e4_1', name: 'יונתן גטהון', role: 'עובד', department: 'ביקורת בריאות', isManager: false, parentId: 'e4' },
+            { id: 'e4_2', name: 'יהודה צוריאל', role: 'עובד', department: 'ביקורת בריאות', isManager: false, parentId: 'e4' },
+            { id: 'e4_3', name: 'שלמה חג\'בי', role: 'עובד', department: 'ביקורת בריאות', isManager: false, parentId: 'e4' },
+            { id: 'e4_4', name: 'רזאן אלחסנייה', role: 'סטודנט', department: 'ביקורת בריאות', isManager: false, parentId: 'e4' }
         ];
 
-        const promises = managers.map(mgr => {
-            // שימוש ב-setDoc עם merge: true כדי לעדכן אם קיים או ליצור אם חסר
-            return setDoc(doc(this.db, 'employees', mgr.id), mgr, { merge: true });
+        const seedPromises = fixedEmployees.map(emp => {
+            return setDoc(doc(this.db, 'employees', emp.id), { ...emp, createdAt: new Date().toISOString() });
         });
 
-        await Promise.all(promises);
+        await Promise.all(seedPromises);
+        console.log('Fixed data seeded successfully.');
     }
 
     // הגדרת מאזינים בזמן אמת
