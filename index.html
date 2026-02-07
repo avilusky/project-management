@@ -267,8 +267,9 @@
                         <input type="date" id="project-end-date" required>
                     </div>
                 </div>
-                <div class="form-actions">
-                    <button type="button" class="btn btn-secondary close-modal"
+                <div class="modal-footer">
+                    <div class="modal-footer-spacer"></div>
+                    <button type="button" class="btn btn-ghost close-modal"
                         data-modal="project-modal">ביטול</button>
                     <button type="submit" class="btn btn-primary">שמור</button>
                 </div>
@@ -344,8 +345,9 @@
                         </select>
                     </div>
                 </div>
-                <div class="form-actions">
-                    <button type="button" class="btn btn-secondary close-modal" data-modal="task-modal">ביטול</button>
+                <div class="modal-footer">
+                    <div class="modal-footer-spacer"></div>
+                    <button type="button" class="btn btn-ghost close-modal" data-modal="task-modal">ביטול</button>
                     <button type="submit" class="btn btn-primary">שמור</button>
                 </div>
             </form>
@@ -396,11 +398,11 @@
                     </div>
                 </div>
             </div>
-            <div class="task-view-actions">
-                <button class="btn btn-danger" id="task-view-delete-btn">🗑️ מחק</button>
-                <div style="flex:1"></div>
-                <button class="btn btn-secondary close-modal" data-modal="task-view-modal">סגור</button>
-                <button class="btn btn-primary" id="task-view-edit-btn">✏️ ערוך</button>
+            <div class="modal-footer">
+                <button class="btn btn-outline-danger" id="task-view-delete-btn">מחק</button>
+                <div class="modal-footer-spacer"></div>
+                <button class="btn btn-ghost close-modal" data-modal="task-view-modal">סגור</button>
+                <button class="btn btn-primary" id="task-view-edit-btn">ערוך</button>
             </div>
         </div>
     </div>
@@ -444,8 +446,9 @@
                     <input type="checkbox" id="employee-is-manager">
                     <label for="employee-is-manager">האם זה מנהל?</label>
                 </div>
-                <div class="form-actions">
-                    <button type="button" class="btn btn-secondary close-modal"
+                <div class="modal-footer">
+                    <div class="modal-footer-spacer"></div>
+                    <button type="button" class="btn btn-ghost close-modal"
                         data-modal="employee-modal">ביטול</button>
                     <button type="submit" class="btn btn-primary">שמור</button>
                 </div>
@@ -463,8 +466,8 @@
             <div class="modal-body">
                 <p id="delete-message">האם אתה בטוח שברצונך למחוק?</p>
             </div>
-            <div class="form-actions">
-                <button type="button" class="btn btn-secondary close-modal" data-modal="delete-modal">ביטול</button>
+            <div class="modal-footer modal-footer-centered">
+                <button type="button" class="btn btn-ghost close-modal" data-modal="delete-modal">ביטול</button>
                 <button type="button" class="btn btn-danger" id="confirm-delete-btn">מחק</button>
             </div>
         </div>

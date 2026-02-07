@@ -584,6 +584,7 @@ body {
 .btn {
     display: inline-flex;
     align-items: center;
+    justify-content: center;
     gap: 6px;
     padding: 8px 16px;
     border: 1px solid transparent;
@@ -594,6 +595,14 @@ body {
     cursor: pointer;
     transition: all var(--transition-fast);
     letter-spacing: 0.1px;
+}
+
+/* Buttons inside modal footer get better proportions */
+.modal-footer .btn {
+    padding: 9px 22px;
+    font-size: 0.88rem;
+    border-radius: 8px;
+    min-width: 70px;
 }
 
 .btn-primary {
@@ -1116,7 +1125,20 @@ body {
 
 .modal-small {
     max-width: 380px;
+}
+
+.modal-body {
+    padding: 20px;
+}
+
+.modal-small .modal-body {
     text-align: center;
+    padding: 24px 20px 12px;
+}
+
+.modal-small .modal-footer {
+    border-top: none;
+    padding-top: 8px;
 }
 
 @keyframes slideUp {
@@ -1212,6 +1234,55 @@ form {
     margin-top: 8px;
 }
 
+/* =========================================
+   Unified Modal Footer
+   ========================================= */
+.modal-footer {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 16px 20px;
+    border-top: 1px solid var(--border-color);
+    background: var(--bg-card);
+    border-radius: 0 0 var(--radius-xl) var(--radius-xl);
+}
+
+.modal-footer-spacer {
+    flex: 1;
+}
+
+.modal-footer-centered {
+    justify-content: center;
+}
+
+/* Ghost button - subtle, text-only feel */
+.btn-ghost {
+    background: transparent;
+    color: var(--text-muted);
+    border: none;
+    font-weight: 500;
+}
+
+.btn-ghost:hover {
+    background: var(--bg-card-hover);
+    color: var(--text-secondary);
+}
+
+/* Outline danger - less aggressive than solid danger */
+.btn-outline-danger {
+    background: transparent;
+    color: var(--danger-color);
+    border: 1px solid var(--danger-color);
+    opacity: 0.75;
+    font-weight: 500;
+}
+
+.btn-outline-danger:hover {
+    background: var(--danger-color);
+    color: white;
+    opacity: 1;
+}
+
 .modal-actions {
     padding: 20px;
     display: flex;
@@ -1268,12 +1339,19 @@ form {
     font-weight: 500;
 }
 
+/* Legacy - replaced by .modal-footer */
 .task-view-actions {
     padding: 14px 20px;
     border-top: 1px solid var(--border-color);
     display: flex;
     justify-content: flex-end;
     gap: 8px;
+}
+
+/* Ensure modal-footer inside forms has no extra margin */
+form .modal-footer {
+    margin: 4px -20px -20px -20px;
+    padding: 16px 20px;
 }
 
 /* Empty State */
