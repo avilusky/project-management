@@ -747,9 +747,15 @@ function loadProjects() {
     // בניית ה-HTML לפי קבוצות
     let html = '';
 
-    // סדר המנהלים לפי שם
+    // סדר מנהלים קבוע: אבי לוסקי, שירה עמיאור, בנג'י רוזמן, השאר לפי שם
+    const managerOrder = ['e2', 'e3', 'e4'];
     const managerIds = Object.keys(grouped);
     managerIds.sort((a, b) => {
+        const indexA = managerOrder.indexOf(a);
+        const indexB = managerOrder.indexOf(b);
+        if (indexA !== -1 && indexB !== -1) return indexA - indexB;
+        if (indexA !== -1) return -1;
+        if (indexB !== -1) return 1;
         const mA = db.getEmployeeById(a);
         const mB = db.getEmployeeById(b);
         return (mA ? mA.name : '').localeCompare(mB ? mB.name : '', 'he');
