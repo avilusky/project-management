@@ -11,6 +11,10 @@
 let currentDeleteTarget = null;
 let currentDeleteType = null;
 
+// מיון טבלת משימות
+let taskSortColumn = null;
+let taskSortDirection = 'asc'; // 'asc' או 'desc'
+
 // ============================================
 // אתחול האפליקציה
 // ============================================
@@ -340,6 +344,7 @@ function viewTask(taskId) {
     if (!task) return;
 
     const project = db.getProjectById(task.projectId);
+    const projectManager = project ? db.getEmployeeById(project.managerId) : null;
     const assignee = db.getEmployeeById(task.assigneeId);
     const daysInfo = task.status === 'completed' ? { text: 'הושלם ✓', className: 'normal' } : getDaysRemaining(task.dueDate);
 
@@ -347,6 +352,7 @@ function viewTask(taskId) {
     document.getElementById('task-view-description').textContent = task.description || 'ללא תיאור';
     document.getElementById('task-view-description').style.display = task.description ? 'block' : 'none';
     document.getElementById('task-view-project').textContent = project ? project.name : 'ללא פרויקט';
+    document.getElementById('task-view-manager').textContent = projectManager ? projectManager.name : '-';
     document.getElementById('task-view-assignee').textContent = assignee ? assignee.name : 'לא הוקצה';
     document.getElementById('task-view-start-date').textContent = formatDate(task.startDate);
     document.getElementById('task-view-due-date').textContent = formatDate(task.dueDate);
@@ -523,11 +529,12 @@ function initFilters() {
         if (!isUpdatingFilters) loadProjects();
     });
 
-    // פילטרי משימות
-    document.getElementById('task-department-filter').addEventListener('change', () => {
+    // פילטרי משימות - כולם מפעילים את אותה פונקציה שמעדכנת הכל
+    document.getElementById('task-manager-filter').addEventListener('change', () => {
         if (!isUpdatingFilters) {
-            // כשמשנים מחלקה - עדכון רשימת הפרויקטים בפילטר ואז טעינה מחדש
-            updateProjectFilterByDepartment();
+            // כשמשנים מנהל - איפוס פרויקט ועובד
+            document.getElementById('task-project-filter').value = 'all';
+            document.getElementById('task-employee-filter').value = 'all';
             loadTasks();
         }
     });
@@ -540,29 +547,6 @@ function initFilters() {
     document.getElementById('task-employee-filter').addEventListener('change', () => {
         if (!isUpdatingFilters) loadTasks();
     });
-}
-
-// עדכון פילטר פרויקטים לפי מחלקה שנבחרה
-function updateProjectFilterByDepartment() {
-    isUpdatingFilters = true;
-    const departmentFilter = document.getElementById('task-department-filter').value;
-    const projectFilter = document.getElementById('task-project-filter');
-    const selectedProjectValue = projectFilter.value;
-
-    let projects = db.getProjects();
-    if (departmentFilter !== 'all') {
-        projects = projects.filter(p => p.department === departmentFilter);
-    }
-
-    projectFilter.innerHTML = '<option value="all">הכל</option>';
-    projects.forEach(project => {
-        projectFilter.innerHTML += `<option value="${project.id}">${project.name}</option>`;
-    });
-
-    // נסיון לשמר פרויקט נבחר
-    projectFilter.value = selectedProjectValue;
-    if (!projectFilter.value) projectFilter.value = 'all';
-    isUpdatingFilters = false;
 }
 
 // ============================================
@@ -638,7 +622,7 @@ function loadUpcomingTasks() {
         const daysInfo = getDaysRemaining(task.dueDate);
 
         return `
-            <div class="mini-task-item">
+            <div class="mini-task-item clickable-card" onclick="goToTask('${task.id}')">
                 <div class="task-mini-info">
                     <span class="task-mini-name">${task.name}</span>
                     <span class="task-mini-project">${project ? project.name : 'ללא פרויקט'}</span>
@@ -699,6 +683,17 @@ function viewProjectTasks(projectId) {
     loadTasks();
 }
 
+function goToTask(taskId) {
+    // מעבר לטאב משימות ופתיחת דיאלוג המשימה
+    document.querySelector('.nav-item[data-page="tasks"]').click();
+    loadTasks();
+    // פתיחת דיאלוג המשימה
+    setTimeout(() => {
+        viewTask(taskId);
+    }, 100);
+}
+window.goToTask = goToTask;
+
 // ============================================
 // פרויקטים
 // ============================================
@@ -734,7 +729,72 @@ function loadProjects() {
         return;
     }
 
-    container.innerHTML = projects.map(project => {
+    // קיבוץ פרויקטים לפי מנהל
+    const grouped = {};
+    const noManager = [];
+
+    projects.forEach(project => {
+        if (project.managerId) {
+            if (!grouped[project.managerId]) {
+                grouped[project.managerId] = [];
+            }
+            grouped[project.managerId].push(project);
+        } else {
+            noManager.push(project);
+        }
+    });
+
+    // בניית ה-HTML לפי קבוצות
+    let html = '';
+
+    // סדר המנהלים לפי שם
+    const managerIds = Object.keys(grouped);
+    managerIds.sort((a, b) => {
+        const mA = db.getEmployeeById(a);
+        const mB = db.getEmployeeById(b);
+        return (mA ? mA.name : '').localeCompare(mB ? mB.name : '', 'he');
+    });
+
+    managerIds.forEach(managerId => {
+        const manager = db.getEmployeeById(managerId);
+        const managerProjects = grouped[managerId];
+        const managerName = manager ? manager.name : 'לא ידוע';
+
+        html += `
+            <div class="project-group">
+                <div class="project-group-header">
+                    <span class="project-group-icon">👤</span>
+                    <span class="project-group-name">${managerName}</span>
+                    <span class="project-group-count">${managerProjects.length} פרויקטים</span>
+                </div>
+                <div class="project-group-cards">
+                    ${renderProjectCards(managerProjects)}
+                </div>
+            </div>
+        `;
+    });
+
+    // פרויקטים ללא מנהל
+    if (noManager.length > 0) {
+        html += `
+            <div class="project-group">
+                <div class="project-group-header">
+                    <span class="project-group-icon">📁</span>
+                    <span class="project-group-name">ללא מנהל</span>
+                    <span class="project-group-count">${noManager.length} פרויקטים</span>
+                </div>
+                <div class="project-group-cards">
+                    ${renderProjectCards(noManager)}
+                </div>
+            </div>
+        `;
+    }
+
+    container.innerHTML = html;
+}
+
+function renderProjectCards(projects) {
+    return projects.map(project => {
         const manager = db.getEmployeeById(project.managerId);
         const taskCount = db.getTasksByProject(project.id).length;
         const daysInfo = getDaysRemaining(project.endDate);
@@ -744,7 +804,6 @@ function loadProjects() {
                 <div class="project-card-header clickable-header" onclick="viewProjectTasks('${project.id}')" title="לחץ לצפייה במשימות">
                     <div class="project-card-title">
                         <h4>${project.name}</h4>
-                        <span class="project-card-manager">👤 ${manager ? manager.name : 'ללא מנהל'}</span>
                     </div>
                     <span class="status-badge status-${project.status}">${getStatusText(project.status)}</span>
                 </div>
@@ -784,53 +843,107 @@ function loadProjects() {
 // ============================================
 
 function loadTasks() {
-    // טעינת פרויקטים לפילטר (תמיד מרענן) - עם סינון לפי מחלקה
     isUpdatingFilters = true;
-    const departmentFilter = document.getElementById('task-department-filter');
-    const selectedDepartment = departmentFilter.value;
 
+    // קריאת ערכים נוכחיים מהפילטרים
+    const managerFilter = document.getElementById('task-manager-filter');
     const projectFilter = document.getElementById('task-project-filter');
-    const selectedProjectValue = projectFilter.value;
-    projectFilter.innerHTML = '<option value="all">הכל</option>';
-    let projects = db.getProjects();
-    if (selectedDepartment !== 'all') {
-        projects = projects.filter(p => p.department === selectedDepartment);
-    }
-    projects.forEach(project => {
-        projectFilter.innerHTML += `<option value="${project.id}">${project.name}</option>`;
-    });
-    projectFilter.value = selectedProjectValue;
-    if (!projectFilter.value) projectFilter.value = 'all';
-
-    // טעינת עובדים לפילטר (תמיד מרענן)
+    const statusFilter = document.getElementById('task-status-filter');
     const employeeFilter = document.getElementById('task-employee-filter');
-    const selectedEmployeeValue = employeeFilter.value;
-    employeeFilter.innerHTML = '<option value="all">הכל</option>';
-    const employees = db.getAllWorkersAndManagers();
-    employees.forEach(emp => {
-        employeeFilter.innerHTML += `<option value="${emp.id}">${emp.name}</option>`;
-    });
-    employeeFilter.value = selectedEmployeeValue;
-    if (!employeeFilter.value) employeeFilter.value = 'all';
-    isUpdatingFilters = false;
 
-    // קבלת ערכי פילטר
+    const selectedManager = managerFilter.value;
     const selectedProject = projectFilter.value;
-    const selectedStatus = document.getElementById('task-status-filter').value;
+    const selectedStatus = statusFilter.value;
     const selectedEmployee = employeeFilter.value;
 
-    // סינון משימות
-    let tasks = db.getTasks();
-    if (selectedProject !== 'all') {
-        tasks = tasks.filter(t => t.projectId === selectedProject);
-    }
-    if (selectedStatus !== 'all') {
-        tasks = tasks.filter(t => t.status === selectedStatus);
-    }
-    if (selectedEmployee !== 'all') {
-        tasks = tasks.filter(t => t.assigneeId === selectedEmployee);
+    // === שלב 1: סינון משימות לפי כל הפילטרים ===
+    let allTasks = db.getTasks();
+    let filteredTasks = [...allTasks];
+
+    // סינון לפי מנהל אחראי - דרך הפרויקט של המשימה
+    if (selectedManager !== 'all') {
+        const managerProjectIds = db.getProjects()
+            .filter(p => p.managerId === selectedManager)
+            .map(p => p.id);
+        filteredTasks = filteredTasks.filter(t => managerProjectIds.includes(t.projectId));
     }
 
+    if (selectedProject !== 'all') {
+        filteredTasks = filteredTasks.filter(t => t.projectId === selectedProject);
+    }
+    if (selectedStatus !== 'all') {
+        filteredTasks = filteredTasks.filter(t => t.status === selectedStatus);
+    }
+    if (selectedEmployee !== 'all') {
+        filteredTasks = filteredTasks.filter(t => t.assigneeId === selectedEmployee);
+    }
+
+    // === שלב 2: עדכון אפשרויות הפילטרים (cascading) ===
+
+    // מנהלים - תמיד מרענן
+    const managers = db.getManagers();
+    managerFilter.innerHTML = '<option value="all">הכל</option>';
+    managers.forEach(manager => {
+        managerFilter.innerHTML += `<option value="${manager.id}">${manager.name}</option>`;
+    });
+    managerFilter.value = selectedManager;
+    if (!managerFilter.value) managerFilter.value = 'all';
+
+    // פרויקטים - מסוננים לפי מנהל
+    let availableProjects = db.getProjects();
+    if (selectedManager !== 'all') {
+        availableProjects = availableProjects.filter(p => p.managerId === selectedManager);
+    }
+
+    projectFilter.innerHTML = '<option value="all">הכל</option>';
+    availableProjects.forEach(project => {
+        projectFilter.innerHTML += `<option value="${project.id}">${project.name}</option>`;
+    });
+    projectFilter.value = selectedProject;
+    if (!projectFilter.value) projectFilter.value = 'all';
+
+    // עובדים - מסוננים לפי מנהל ופרויקט (מציג רק עובדים שיש להם משימות במסננים הנוכחיים)
+    let relevantTasksForEmployees = [...allTasks];
+    if (selectedManager !== 'all') {
+        const managerProjectIds = db.getProjects()
+            .filter(p => p.managerId === selectedManager)
+            .map(p => p.id);
+        relevantTasksForEmployees = relevantTasksForEmployees.filter(t => managerProjectIds.includes(t.projectId));
+    }
+    if (selectedProject !== 'all') {
+        relevantTasksForEmployees = relevantTasksForEmployees.filter(t => t.projectId === selectedProject);
+    }
+    if (selectedStatus !== 'all') {
+        relevantTasksForEmployees = relevantTasksForEmployees.filter(t => t.status === selectedStatus);
+    }
+
+    const relevantEmployeeIds = [...new Set(relevantTasksForEmployees.map(t => t.assigneeId).filter(Boolean))];
+    const allEmployees = db.getAllWorkersAndManagers();
+    const availableEmployees = allEmployees.filter(emp => relevantEmployeeIds.includes(emp.id));
+
+    employeeFilter.innerHTML = '<option value="all">הכל</option>';
+    if (allTasks.length === 0) {
+        allEmployees.forEach(emp => {
+            employeeFilter.innerHTML += `<option value="${emp.id}">${emp.name}</option>`;
+        });
+    } else {
+        availableEmployees.forEach(emp => {
+            employeeFilter.innerHTML += `<option value="${emp.id}">${emp.name}</option>`;
+        });
+    }
+    employeeFilter.value = selectedEmployee;
+    if (!employeeFilter.value) employeeFilter.value = 'all';
+
+    isUpdatingFilters = false;
+
+    // === שלב 3: מיון המשימות המסוננות ===
+    let tasks = filteredTasks;
+
+    if (taskSortColumn) {
+        tasks = sortTasks(tasks, taskSortColumn, taskSortDirection);
+    }
+
+    // === שלב 4: הצגת המשימות ===
     const container = document.getElementById('tasks-list');
 
     if (tasks.length === 0) {
@@ -838,22 +951,31 @@ function loadTasks() {
         return;
     }
 
+    const sortIcon = (col) => {
+        if (taskSortColumn !== col) return '<span class="sort-icon">⇅</span>';
+        return taskSortDirection === 'asc'
+            ? '<span class="sort-icon active">▲</span>'
+            : '<span class="sort-icon active">▼</span>';
+    };
+
     container.innerHTML = `
         <table class="tasks-table">
             <thead>
                 <tr>
-                    <th>שם המשימה</th>
-                    <th>פרויקט</th>
-                    <th>עובד אחראי</th>
-                    <th>עדיפות</th>
-                    <th>תאריך יעד</th>
-                    <th>ימים נותרים</th>
-                    <th>סטטוס</th>
+                    <th class="sortable-th" onclick="sortTasksBy('name')">שם המשימה ${sortIcon('name')}</th>
+                    <th class="sortable-th" onclick="sortTasksBy('project')">פרויקט ${sortIcon('project')}</th>
+                    <th class="sortable-th" onclick="sortTasksBy('manager')">מנהל ${sortIcon('manager')}</th>
+                    <th class="sortable-th" onclick="sortTasksBy('assignee')">עובד ${sortIcon('assignee')}</th>
+                    <th class="sortable-th" onclick="sortTasksBy('priority')">עדיפות ${sortIcon('priority')}</th>
+                    <th class="sortable-th" onclick="sortTasksBy('dueDate')">תאריך יעד ${sortIcon('dueDate')}</th>
+                    <th class="sortable-th" onclick="sortTasksBy('daysRemaining')">ימים נותרים ${sortIcon('daysRemaining')}</th>
+                    <th class="sortable-th" onclick="sortTasksBy('status')">סטטוס ${sortIcon('status')}</th>
                 </tr>
             </thead>
             <tbody>
                 ${tasks.map(task => {
         const project = db.getProjectById(task.projectId);
+        const projectManager = project ? db.getEmployeeById(project.managerId) : null;
         const assignee = db.getEmployeeById(task.assigneeId);
         const daysInfo = task.status === 'completed' ? { text: 'הושלם ✓', className: 'normal' } : getDaysRemaining(task.dueDate);
 
@@ -861,6 +983,7 @@ function loadTasks() {
                         <tr class="task-row-clickable" onclick="viewTask('${task.id}')">
                             <td class="task-name-cell">${task.name}</td>
                             <td class="task-project-cell">${project ? project.name : 'ללא פרויקט'}</td>
+                            <td class="task-manager-cell">${projectManager ? projectManager.name : '-'}</td>
                             <td class="task-assignee-cell">
                                 ${assignee ? assignee.name : 'לא הוקצה'}
                             </td>
@@ -874,6 +997,86 @@ function loadTasks() {
             </tbody>
         </table>
     `;
+}
+
+// מיון משימות לפי עמודה
+function sortTasksBy(column) {
+    if (taskSortColumn === column) {
+        // אם כבר ממוין לפי עמודה זו - שנה כיוון
+        taskSortDirection = taskSortDirection === 'asc' ? 'desc' : 'asc';
+    } else {
+        taskSortColumn = column;
+        taskSortDirection = 'asc';
+    }
+    loadTasks();
+}
+window.sortTasksBy = sortTasksBy;
+
+function sortTasks(tasks, column, direction) {
+    const priorityOrder = { high: 1, medium: 2, low: 3 };
+    const statusOrder = { 'in-progress': 1, 'pending': 2, 'completed': 3 };
+
+    return [...tasks].sort((a, b) => {
+        let valA, valB;
+
+        switch (column) {
+            case 'name':
+                valA = a.name || '';
+                valB = b.name || '';
+                break;
+            case 'project': {
+                const pA = db.getProjectById(a.projectId);
+                const pB = db.getProjectById(b.projectId);
+                valA = pA ? pA.name : '';
+                valB = pB ? pB.name : '';
+                break;
+            }
+            case 'manager': {
+                const prjA = db.getProjectById(a.projectId);
+                const prjB = db.getProjectById(b.projectId);
+                const mA = prjA ? db.getEmployeeById(prjA.managerId) : null;
+                const mB = prjB ? db.getEmployeeById(prjB.managerId) : null;
+                valA = mA ? mA.name : '';
+                valB = mB ? mB.name : '';
+                break;
+            }
+            case 'assignee': {
+                const eA = db.getEmployeeById(a.assigneeId);
+                const eB = db.getEmployeeById(b.assigneeId);
+                valA = eA ? eA.name : '';
+                valB = eB ? eB.name : '';
+                break;
+            }
+            case 'priority':
+                valA = priorityOrder[a.priority] || 99;
+                valB = priorityOrder[b.priority] || 99;
+                return direction === 'asc' ? valA - valB : valB - valA;
+            case 'dueDate':
+                valA = a.dueDate || '';
+                valB = b.dueDate || '';
+                break;
+            case 'daysRemaining': {
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+                const dA = a.dueDate ? Math.ceil((new Date(a.dueDate) - today) / (1000 * 60 * 60 * 24)) : 9999;
+                const dB = b.dueDate ? Math.ceil((new Date(b.dueDate) - today) / (1000 * 60 * 60 * 24)) : 9999;
+                return direction === 'asc' ? dA - dB : dB - dA;
+            }
+            case 'status':
+                valA = statusOrder[a.status] || 99;
+                valB = statusOrder[b.status] || 99;
+                return direction === 'asc' ? valA - valB : valB - valA;
+            default:
+                return 0;
+        }
+
+        // מיון טקסט (עברית)
+        if (typeof valA === 'string') {
+            const cmp = valA.localeCompare(valB, 'he');
+            return direction === 'asc' ? cmp : -cmp;
+        }
+        return direction === 'asc' ? (valA > valB ? 1 : -1) : (valA < valB ? 1 : -1);
+    });
 }
 
 // ============================================
