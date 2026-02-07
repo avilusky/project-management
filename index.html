@@ -104,6 +104,12 @@
                     <div class="card upcoming-tasks-card">
                         <div class="card-header">
                             <h3>משימות קרובות</h3>
+                            <div class="card-header-filters">
+                                <button class="filter-chip active" onclick="filterUpcomingTasks(7, this)">שבוע</button>
+                                <button class="filter-chip" onclick="filterUpcomingTasks(14, this)">שבועיים</button>
+                                <button class="filter-chip" onclick="filterUpcomingTasks(30, this)">חודש</button>
+                                <button class="filter-chip" onclick="filterUpcomingTasks(0, this)">הכל</button>
+                            </div>
                         </div>
                         <div class="card-body">
                             <div id="upcoming-tasks-list" class="tasks-mini-list">
@@ -114,7 +120,13 @@
 
                     <div class="card recent-projects-card">
                         <div class="card-header">
-                            <h3>פרויקטים אחרונים</h3>
+                            <h3>פרויקטים קרובים</h3>
+                            <div class="card-header-filters">
+                                <button class="filter-chip" onclick="filterUpcomingProjects(7, this)">שבוע</button>
+                                <button class="filter-chip" onclick="filterUpcomingProjects(14, this)">שבועיים</button>
+                                <button class="filter-chip" onclick="filterUpcomingProjects(30, this)">חודש</button>
+                                <button class="filter-chip active" onclick="filterUpcomingProjects(0, this)">הכל</button>
+                            </div>
                         </div>
                         <div class="card-body">
                             <div id="recent-projects-list" class="projects-mini-list">
@@ -148,6 +160,10 @@
                         <select id="project-manager-filter">
                             <option value="all">הכל</option>
                         </select>
+                    </div>
+                    <div class="filter-group">
+                        <label>ימים:</label>
+                        <input type="number" id="project-days-filter" class="filter-days-input" placeholder="∞" min="0">
                     </div>
                     <button class="btn btn-filter-reset" onclick="resetProjectFilters()">🔄 איפוס</button>
                 </div>
@@ -192,6 +208,10 @@
                         <select id="task-employee-filter">
                             <option value="all">הכל</option>
                         </select>
+                    </div>
+                    <div class="filter-group">
+                        <label>ימים:</label>
+                        <input type="number" id="task-days-filter" class="filter-days-input" placeholder="∞" min="0">
                     </div>
                     <button class="btn btn-filter-reset" onclick="resetTaskFilters()">🔄 איפוס</button>
                 </div>

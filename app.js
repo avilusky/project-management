@@ -528,6 +528,9 @@ function initFilters() {
     document.getElementById('project-manager-filter').addEventListener('change', () => {
         if (!isUpdatingFilters) loadProjects();
     });
+    document.getElementById('project-days-filter').addEventListener('input', () => {
+        if (!isUpdatingFilters) loadProjects();
+    });
 
     // פילטרי משימות - כולם מפעילים את אותה פונקציה שמעדכנת הכל
     document.getElementById('task-manager-filter').addEventListener('change', () => {
@@ -545,6 +548,9 @@ function initFilters() {
         if (!isUpdatingFilters) loadTasks();
     });
     document.getElementById('task-employee-filter').addEventListener('change', () => {
+        if (!isUpdatingFilters) loadTasks();
+    });
+    document.getElementById('task-days-filter').addEventListener('input', () => {
         if (!isUpdatingFilters) loadTasks();
     });
 }
@@ -604,20 +610,37 @@ function loadDashboard() {
     // טעינת משימות קרובות
     loadUpcomingTasks();
 
-    // טעינת פרויקטים אחרונים
+    // טעינת פרויקטים קרובים
     loadRecentProjects();
 }
 
-function loadUpcomingTasks() {
+function loadUpcomingTasks(days = 7) {
     const container = document.getElementById('upcoming-tasks-list');
-    const tasks = db.getUpcomingTasks(14);
+
+    let tasks;
+    const todayStr = new Date().toISOString().split('T')[0];
+    if (days === 0) {
+        // הכל - כל המשימות שלא הושלמו
+        tasks = db.getTasks().filter(t => t.status !== 'completed');
+    } else {
+        const futureDate = new Date();
+        futureDate.setDate(futureDate.getDate() + days);
+        const futureDateStr = futureDate.toISOString().split('T')[0];
+        // משימות בטווח + משימות באיחור (תמיד מוצגות)
+        tasks = db.getTasks().filter(t =>
+            t.status !== 'completed' &&
+            t.dueDate &&
+            (t.dueDate <= futureDateStr)
+        );
+    }
+    tasks.sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate));
 
     if (tasks.length === 0) {
         container.innerHTML = '<p class="empty-message">אין משימות קרובות</p>';
         return;
     }
 
-    container.innerHTML = tasks.slice(0, 5).map(task => {
+    container.innerHTML = tasks.slice(0, 8).map(task => {
         const project = db.getProjectById(task.projectId);
         const daysInfo = getDaysRemaining(task.dueDate);
 
@@ -633,19 +656,39 @@ function loadUpcomingTasks() {
     }).join('');
 }
 
-function loadRecentProjects() {
+function filterUpcomingTasks(days, btn) {
+    // עדכון כפתור פעיל
+    btn.closest('.card-header-filters').querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+    btn.classList.add('active');
+    loadUpcomingTasks(days);
+}
+window.filterUpcomingTasks = filterUpcomingTasks;
+
+function loadRecentProjects(days = 0) {
     const container = document.getElementById('recent-projects-list');
-    const projects = db.getActiveProjects();
+    const allProjects = db.getActiveProjects();
+
+    let projects;
+    if (days === 0) {
+        // הכל - כל הפרויקטים הפעילים
+        projects = allProjects;
+    } else {
+        const futureDate = new Date();
+        futureDate.setDate(futureDate.getDate() + days);
+        const futureDateStr = futureDate.toISOString().split('T')[0];
+
+        // פרויקטים בטווח + פרויקטים באיחור (תמיד מוצגים)
+        projects = allProjects.filter(p => p.endDate && p.endDate <= futureDateStr);
+    }
 
     if (projects.length === 0) {
-        container.innerHTML = '<p class="empty-message">אין פרויקטים פעילים</p>';
+        container.innerHTML = '<p class="empty-message">אין פרויקטים קרובים</p>';
         return;
     }
 
-    container.innerHTML = projects.slice(0, 5).map(project => {
+    container.innerHTML = projects.slice(0, 8).map(project => {
         const manager = db.getEmployeeById(project.managerId);
 
-        // הוספת onclick לניווט למשימות הפרויקט
         return `
             <div class="mini-project-item clickable-card" onclick="viewProjectTasks('${project.id}')">
                 <div class="project-mini-info">
@@ -657,6 +700,13 @@ function loadRecentProjects() {
         `;
     }).join('');
 }
+
+function filterUpcomingProjects(days, btn) {
+    btn.closest('.card-header-filters').querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+    btn.classList.add('active');
+    loadRecentProjects(days);
+}
+window.filterUpcomingProjects = filterUpcomingProjects;
 
 function viewProjectTasks(projectId) {
     // 1. עדכון הפילטר
@@ -718,6 +768,7 @@ window.viewEmployeeTasks = viewEmployeeTasks;
 function resetProjectFilters() {
     document.getElementById('project-status-filter').value = 'all';
     document.getElementById('project-manager-filter').value = 'all';
+    document.getElementById('project-days-filter').value = '';
     loadProjects();
 }
 window.resetProjectFilters = resetProjectFilters;
@@ -727,6 +778,7 @@ function resetTaskFilters() {
     document.getElementById('task-project-filter').value = 'all';
     document.getElementById('task-status-filter').value = 'all';
     document.getElementById('task-employee-filter').value = 'all';
+    document.getElementById('task-days-filter').value = '';
     loadTasks();
 }
 window.resetTaskFilters = resetTaskFilters;
@@ -757,6 +809,20 @@ function loadProjects() {
     let projects = db.getProjectsByStatus(statusFilter);
     if (selectedManager !== 'all') {
         projects = projects.filter(p => p.managerId === selectedManager);
+    }
+
+    // סינון לפי ימים נותרים
+    const projectDaysFilter = document.getElementById('project-days-filter').value;
+    if (projectDaysFilter !== '') {
+        const maxDays = parseInt(projectDaysFilter);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        projects = projects.filter(p => {
+            if (!p.endDate) return false;
+            const end = new Date(p.endDate);
+            const diffDays = Math.ceil((end - today) / (1000 * 60 * 60 * 24));
+            return diffDays <= maxDays;
+        });
     }
 
     const container = document.getElementById('projects-list');
@@ -919,6 +985,20 @@ function loadTasks() {
     }
     if (selectedEmployee !== 'all') {
         filteredTasks = filteredTasks.filter(t => t.assigneeId === selectedEmployee);
+    }
+
+    // סינון לפי ימים נותרים
+    const taskDaysFilter = document.getElementById('task-days-filter').value;
+    if (taskDaysFilter !== '') {
+        const maxDays = parseInt(taskDaysFilter);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        filteredTasks = filteredTasks.filter(t => {
+            if (!t.dueDate) return false;
+            const due = new Date(t.dueDate);
+            const diffDays = Math.ceil((due - today) / (1000 * 60 * 60 * 24));
+            return diffDays <= maxDays;
+        });
     }
 
     // === שלב 2: עדכון אפשרויות הפילטרים (cascading) ===
