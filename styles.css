@@ -1294,7 +1294,7 @@ form {
    Task View Modal
    ========================================= */
 .task-view-modal-content {
-    max-width: 90vw;
+    max-width: 75vw;
     width: 100%;
 }
 
