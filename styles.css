@@ -1335,7 +1335,7 @@ form {
 
 #project-modal .modal-content,
 #task-modal .modal-content {
-    max-width: 75vw;
+    max-width: 50vw;
 }
 
 .task-view-body {
