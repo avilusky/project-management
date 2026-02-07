@@ -102,7 +102,7 @@ function initNavigation() {
     const pageTitle = document.getElementById('page-title');
 
     const pageTitles = {
-        'dashboard': 'דשבורד',
+        'dashboard': 'ראשי',
         'projects': 'פרויקטים',
         'tasks': 'משימות',
         'employees': 'עובדים'
