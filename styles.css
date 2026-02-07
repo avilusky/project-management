@@ -1078,14 +1078,31 @@ body {
     color: var(--text-primary);
     display: flex;
     align-items: center;
+    justify-content: space-between;
     gap: 8px;
     border: 1px solid transparent;
+    cursor: pointer;
 }
 
 .team-member:hover {
     background: #e4e8f0;
     border-color: var(--border-color);
     transform: translateX(-3px);
+}
+
+.employee-task-count {
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: var(--secondary-color);
+    background: rgba(79, 124, 255, 0.1);
+    padding: 2px 8px;
+    border-radius: 10px;
+    white-space: nowrap;
+}
+
+.employee-task-count.empty {
+    color: var(--text-muted);
+    background: transparent;
 }
 
 /* =========================================

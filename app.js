@@ -694,6 +694,27 @@ function goToTask(taskId) {
 }
 window.goToTask = goToTask;
 
+function viewEmployeeTasks(employeeId) {
+    // איפוס כל הפילטרים
+    document.getElementById('task-manager-filter').value = 'all';
+    document.getElementById('task-project-filter').value = 'all';
+    document.getElementById('task-status-filter').value = 'all';
+
+    // הגדרת פילטר עובד
+    const employeeFilter = document.getElementById('task-employee-filter');
+    const allEmployees = db.getAllWorkersAndManagers();
+    employeeFilter.innerHTML = '<option value="all">הכל</option>';
+    allEmployees.forEach(emp => {
+        employeeFilter.innerHTML += `<option value="${emp.id}">${emp.name}</option>`;
+    });
+    employeeFilter.value = employeeId;
+
+    // מעבר לטאב משימות
+    document.querySelector('.nav-item[data-page="tasks"]').click();
+    loadTasks();
+}
+window.viewEmployeeTasks = viewEmployeeTasks;
+
 // ============================================
 // פרויקטים
 // ============================================
@@ -1120,13 +1141,16 @@ function loadEmployees() {
                     <div class="org-avatar">👔</div>
                     <h3>${manager.name}</h3>
                     <p>${manager.role}</p>
-                    
+
                     <div class="team-members">
-                        ${team.map(member => `
-                            <div class="team-member">
+                        ${team.map(member => {
+                            const openTasks = db.getTasks().filter(t => t.assigneeId === member.id && t.status !== 'completed').length;
+                            return `
+                            <div class="team-member clickable-card" onclick="viewEmployeeTasks('${member.id}')">
                                 <span>👤 ${member.name}</span>
+                                ${openTasks > 0 ? `<span class="employee-task-count">${openTasks} משימות</span>` : '<span class="employee-task-count empty">ללא משימות</span>'}
                             </div>
-                        `).join('')}
+                        `}).join('')}
                     </div>
                 </div>
             </div>
