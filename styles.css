@@ -232,8 +232,11 @@ body {
     flex: 1;
     margin-right: 260px;
     padding: 24px 28px;
-    min-height: 100vh;
+    height: 100vh;
     background: var(--bg-main);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
 }
 
 /* Header */
@@ -241,6 +244,7 @@ body {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    flex-shrink: 0;
     margin-bottom: 28px;
     padding-bottom: 18px;
     border-bottom: 1px solid var(--border-color);
@@ -290,6 +294,17 @@ body {
 
 .page.active {
     display: block;
+    flex: 1;
+    overflow-y: auto;
+    min-height: 0;
+}
+
+#dashboard-page.active {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
 }
 
 @keyframes fadeIn {
@@ -311,6 +326,7 @@ body {
     grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
     gap: 16px;
     margin-bottom: 28px;
+    flex-shrink: 0;
 }
 
 .stat-card {
@@ -381,6 +397,8 @@ body {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
     gap: 20px;
+    flex: 1;
+    min-height: 0;
 }
 
 /* =========================================
@@ -392,12 +410,15 @@ body {
     border: 1px solid var(--border-color);
     overflow: hidden;
     box-shadow: var(--shadow-sm);
+    display: flex;
+    flex-direction: column;
 }
 
 .card-header {
     padding: 14px 20px;
     border-bottom: 1px solid var(--border-color);
     background: #f0f2f7;
+    flex-shrink: 0;
 }
 
 .card-header h3 {
@@ -408,8 +429,9 @@ body {
 
 .card-body {
     padding: 16px 20px;
-    max-height: 380px;
+    flex: 1;
     overflow-y: auto;
+    min-height: 0;
 }
 
 /* Mini Lists */
@@ -1354,6 +1376,8 @@ form {
     .main-content {
         margin-right: 0;
         padding: 16px;
+        height: auto;
+        overflow: visible;
     }
 
     .form-row {
