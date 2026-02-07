@@ -1333,6 +1333,11 @@ form {
     width: 100%;
 }
 
+#project-modal .modal-content,
+#task-modal .modal-content {
+    max-width: 75vw;
+}
+
 .task-view-body {
     padding: 20px;
 }
