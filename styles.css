@@ -999,9 +999,9 @@ body {
 
 /* Department Card Wrapper */
 .department-card {
-    flex: 0 1 250px;
-    min-width: 220px;
-    max-width: 280px;
+    flex: 0 1 275px;
+    min-width: 242px;
+    max-width: 308px;
     height: 100%;
 }
 
