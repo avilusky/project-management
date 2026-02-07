@@ -715,6 +715,22 @@ function viewEmployeeTasks(employeeId) {
 }
 window.viewEmployeeTasks = viewEmployeeTasks;
 
+function resetProjectFilters() {
+    document.getElementById('project-status-filter').value = 'all';
+    document.getElementById('project-manager-filter').value = 'all';
+    loadProjects();
+}
+window.resetProjectFilters = resetProjectFilters;
+
+function resetTaskFilters() {
+    document.getElementById('task-manager-filter').value = 'all';
+    document.getElementById('task-project-filter').value = 'all';
+    document.getElementById('task-status-filter').value = 'all';
+    document.getElementById('task-employee-filter').value = 'all';
+    loadTasks();
+}
+window.resetTaskFilters = resetTaskFilters;
+
 // ============================================
 // פרויקטים
 // ============================================
