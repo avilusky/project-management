@@ -1302,23 +1302,33 @@ form {
     padding: 20px;
 }
 
+.task-view-layout {
+    display: flex;
+    gap: 24px;
+}
+
+.task-view-details {
+    flex: 0 0 40%;
+}
+
 .task-view-description {
+    flex: 1;
     color: var(--text-secondary);
     font-size: 0.9rem;
     line-height: 1.7;
-    margin-bottom: 18px;
-    padding: 12px 14px;
+    padding: 14px 16px;
     background: var(--bg-card-hover);
     border-radius: var(--radius-sm);
-    border-bottom: 1px solid var(--border-color);
+    border: 1px solid var(--border-color);
     white-space: pre-wrap;
     word-wrap: break-word;
+    align-self: flex-start;
 }
 
 .task-view-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-    gap: 12px 16px;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px 20px;
 }
 
 .task-view-field {

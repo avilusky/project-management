@@ -362,40 +362,44 @@
                 <button class="close-modal" data-modal="task-view-modal">&times;</button>
             </div>
             <div class="task-view-body">
-                <div id="task-view-description" class="task-view-description"></div>
-                <div class="task-view-grid">
-                    <div class="task-view-field">
-                        <span class="task-view-label">פרויקט</span>
-                        <span class="task-view-value" id="task-view-project"></span>
+                <div class="task-view-layout">
+                    <div class="task-view-details">
+                        <div class="task-view-grid">
+                            <div class="task-view-field">
+                                <span class="task-view-label">פרויקט</span>
+                                <span class="task-view-value" id="task-view-project"></span>
+                            </div>
+                            <div class="task-view-field">
+                                <span class="task-view-label">מנהל</span>
+                                <span class="task-view-value" id="task-view-manager"></span>
+                            </div>
+                            <div class="task-view-field">
+                                <span class="task-view-label">עובד</span>
+                                <span class="task-view-value" id="task-view-assignee"></span>
+                            </div>
+                            <div class="task-view-field">
+                                <span class="task-view-label">תאריך התחלה</span>
+                                <span class="task-view-value" id="task-view-start-date"></span>
+                            </div>
+                            <div class="task-view-field">
+                                <span class="task-view-label">תאריך יעד</span>
+                                <span class="task-view-value" id="task-view-due-date"></span>
+                            </div>
+                            <div class="task-view-field">
+                                <span class="task-view-label">עדיפות</span>
+                                <span id="task-view-priority"></span>
+                            </div>
+                            <div class="task-view-field">
+                                <span class="task-view-label">סטטוס</span>
+                                <span id="task-view-status"></span>
+                            </div>
+                            <div class="task-view-field">
+                                <span class="task-view-label">ימים נותרים</span>
+                                <span id="task-view-days"></span>
+                            </div>
+                        </div>
                     </div>
-                    <div class="task-view-field">
-                        <span class="task-view-label">מנהל</span>
-                        <span class="task-view-value" id="task-view-manager"></span>
-                    </div>
-                    <div class="task-view-field">
-                        <span class="task-view-label">עובד</span>
-                        <span class="task-view-value" id="task-view-assignee"></span>
-                    </div>
-                    <div class="task-view-field">
-                        <span class="task-view-label">תאריך התחלה</span>
-                        <span class="task-view-value" id="task-view-start-date"></span>
-                    </div>
-                    <div class="task-view-field">
-                        <span class="task-view-label">תאריך יעד</span>
-                        <span class="task-view-value" id="task-view-due-date"></span>
-                    </div>
-                    <div class="task-view-field">
-                        <span class="task-view-label">עדיפות</span>
-                        <span id="task-view-priority"></span>
-                    </div>
-                    <div class="task-view-field">
-                        <span class="task-view-label">סטטוס</span>
-                        <span id="task-view-status"></span>
-                    </div>
-                    <div class="task-view-field">
-                        <span class="task-view-label">ימים נותרים</span>
-                        <span id="task-view-days"></span>
-                    </div>
+                    <div id="task-view-description" class="task-view-description"></div>
                 </div>
             </div>
             <div class="modal-footer">
