@@ -872,7 +872,7 @@ function loadProjects() {
         html += `
             <div class="project-group">
                 <div class="project-group-header">
-                    <span class="project-group-name">${managerName}</span>
+                    <span class="project-group-name"><span style="font-size: 1em; margin-left: 4px;">👨‍💼</span>${managerName}</span>
                     <span class="project-group-count">${managerProjects.length} פרויקטים</span>
                 </div>
                 ${renderProjectTable(managerProjects)}
