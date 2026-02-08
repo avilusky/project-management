@@ -1335,3 +1335,301 @@ function getDaysRemaining(dateStr) {
         };
     }
 }
+
+// ============================================
+// הדפסה
+// ============================================
+
+function printCurrentPage() {
+    const activePage = document.querySelector('.nav-item.active');
+    if (!activePage) return;
+    const page = activePage.dataset.page;
+
+    let title = '';
+    let tableHTML = '';
+
+    switch (page) {
+        case 'projects':
+            title = 'פרויקטים';
+            tableHTML = buildProjectsPrintTable();
+            break;
+        case 'tasks':
+            title = 'משימות';
+            tableHTML = buildTasksPrintTable();
+            break;
+        case 'employees':
+            title = 'עובדים';
+            tableHTML = buildEmployeesPrintTable();
+            break;
+        case 'dashboard':
+            title = 'דשבורד - סיכום';
+            tableHTML = buildDashboardPrintTable();
+            break;
+    }
+
+    const printWindow = window.open('', '_blank');
+    printWindow.document.write(`
+        <!DOCTYPE html>
+        <html dir="rtl" lang="he">
+        <head>
+            <meta charset="UTF-8">
+            <title>${title}</title>
+            <style>
+                body { font-family: Arial, sans-serif; padding: 20px; direction: rtl; }
+                h2 { text-align: center; margin-bottom: 20px; }
+                table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+                th, td { border: 1px solid #333; padding: 6px 10px; text-align: right; font-size: 13px; }
+                th { background: #eee; font-weight: bold; }
+                .stats-container { display: flex; gap: 20px; justify-content: center; margin-bottom: 20px; flex-wrap: wrap; }
+                .stat-box { border: 1px solid #333; padding: 10px 20px; text-align: center; }
+                .stat-box .label { font-size: 12px; color: #555; }
+                .stat-box .value { font-size: 20px; font-weight: bold; }
+                h3 { margin-top: 24px; margin-bottom: 8px; }
+                .print-date { text-align: center; color: #777; font-size: 12px; margin-bottom: 16px; }
+            </style>
+        </head>
+        <body>
+            <h2>${title}</h2>
+            <div class="print-date">תאריך הדפסה: ${new Date().toLocaleDateString('he-IL', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</div>
+            ${tableHTML}
+        </body>
+        </html>
+    `);
+    printWindow.document.close();
+    printWindow.focus();
+    printWindow.print();
+}
+
+function buildProjectsPrintTable() {
+    // שימוש באותו סינון כמו בעמוד הנוכחי
+    const statusFilter = document.getElementById('project-status-filter').value;
+    const selectedManager = document.getElementById('project-manager-filter').value;
+    const projectDaysFilter = document.getElementById('project-days-filter').value;
+
+    let projects = db.getProjectsByStatus(statusFilter);
+    if (selectedManager !== 'all') {
+        projects = projects.filter(p => p.managerId === selectedManager);
+    }
+    if (projectDaysFilter !== '') {
+        const maxDays = parseInt(projectDaysFilter);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        projects = projects.filter(p => {
+            if (!p.endDate) return false;
+            const end = new Date(p.endDate);
+            const diffDays = Math.ceil((end - today) / (1000 * 60 * 60 * 24));
+            return diffDays <= maxDays;
+        });
+    }
+
+    if (projects.length === 0) return '<p>אין פרויקטים להצגה</p>';
+
+    let rows = projects.map(p => {
+        const taskCount = db.getTasksByProject(p.id).length;
+        const manager = db.getEmployeeById(p.managerId);
+        return `<tr>
+            <td>${p.name}</td>
+            <td>${p.description || '-'}</td>
+            <td>${manager ? manager.name : '-'}</td>
+            <td>${formatDate(p.endDate)}</td>
+            <td>${taskCount}</td>
+            <td>${getStatusText(p.status)}</td>
+        </tr>`;
+    }).join('');
+
+    return `<table>
+        <thead><tr>
+            <th>שם הפרויקט</th>
+            <th>תיאור</th>
+            <th>מנהל</th>
+            <th>תאריך יעד</th>
+            <th>משימות</th>
+            <th>סטטוס</th>
+        </tr></thead>
+        <tbody>${rows}</tbody>
+    </table>`;
+}
+
+function buildTasksPrintTable() {
+    // שימוש באותו סינון כמו בעמוד הנוכחי
+    const selectedManager = document.getElementById('task-manager-filter').value;
+    const selectedProject = document.getElementById('task-project-filter').value;
+    const selectedStatus = document.getElementById('task-status-filter').value;
+    const selectedEmployee = document.getElementById('task-employee-filter').value;
+    const taskDaysFilter = document.getElementById('task-days-filter').value;
+
+    let tasks = db.getTasks();
+
+    if (selectedManager !== 'all') {
+        const managerProjectIds = db.getProjects()
+            .filter(p => p.managerId === selectedManager)
+            .map(p => p.id);
+        tasks = tasks.filter(t => managerProjectIds.includes(t.projectId));
+    }
+    if (selectedProject !== 'all') {
+        tasks = tasks.filter(t => t.projectId === selectedProject);
+    }
+    if (selectedStatus !== 'all') {
+        tasks = tasks.filter(t => t.status === selectedStatus);
+    }
+    if (selectedEmployee !== 'all') {
+        tasks = tasks.filter(t => t.assigneeId === selectedEmployee);
+    }
+    if (taskDaysFilter !== '') {
+        const maxDays = parseInt(taskDaysFilter);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        tasks = tasks.filter(t => {
+            if (!t.dueDate) return false;
+            const due = new Date(t.dueDate);
+            const diffDays = Math.ceil((due - today) / (1000 * 60 * 60 * 24));
+            return diffDays <= maxDays;
+        });
+    }
+
+    if (taskSortColumn) {
+        tasks = sortTasks(tasks, taskSortColumn, taskSortDirection);
+    }
+
+    if (tasks.length === 0) return '<p>אין משימות להצגה</p>';
+
+    let rows = tasks.map(t => {
+        const project = db.getProjectById(t.projectId);
+        const projectManager = project ? db.getEmployeeById(project.managerId) : null;
+        const assignee = db.getEmployeeById(t.assigneeId);
+        return `<tr>
+            <td>${t.name}</td>
+            <td>${project ? project.name : '-'}</td>
+            <td>${projectManager ? projectManager.name : '-'}</td>
+            <td>${assignee ? assignee.name : 'לא הוקצה'}</td>
+            <td>${getPriorityText(t.priority)}</td>
+            <td>${formatDate(t.dueDate)}</td>
+            <td>${getTaskStatusText(t.status)}</td>
+        </tr>`;
+    }).join('');
+
+    return `<table>
+        <thead><tr>
+            <th>שם המשימה</th>
+            <th>פרויקט</th>
+            <th>מנהל</th>
+            <th>עובד</th>
+            <th>עדיפות</th>
+            <th>תאריך יעד</th>
+            <th>סטטוס</th>
+        </tr></thead>
+        <tbody>${rows}</tbody>
+    </table>`;
+}
+
+function buildEmployeesPrintTable() {
+    const managers = db.getManagers();
+    if (managers.length === 0) return '<p>אין עובדים להצגה</p>';
+
+    let rows = '';
+    managers.forEach(manager => {
+        const team = db.getTeamByManager(manager.id);
+        // שורת מנהל
+        const managerTasks = db.getTasks().filter(t => t.assigneeId === manager.id && t.status !== 'completed').length;
+        rows += `<tr style="background: #f5f5f5; font-weight: bold;">
+            <td>${manager.name}</td>
+            <td>${manager.role}</td>
+            <td>-</td>
+            <td>${managerTasks}</td>
+        </tr>`;
+        // שורות עובדי צוות
+        team.forEach(member => {
+            const openTasks = db.getTasks().filter(t => t.assigneeId === member.id && t.status !== 'completed').length;
+            rows += `<tr>
+                <td>&nbsp;&nbsp;&nbsp;${member.name}</td>
+                <td>${member.role}</td>
+                <td>${manager.name}</td>
+                <td>${openTasks}</td>
+            </tr>`;
+        });
+    });
+
+    return `<table>
+        <thead><tr>
+            <th>שם</th>
+            <th>תפקיד</th>
+            <th>מנהל ישיר</th>
+            <th>משימות פתוחות</th>
+        </tr></thead>
+        <tbody>${rows}</tbody>
+    </table>`;
+}
+
+function buildDashboardPrintTable() {
+    const stats = db.getStats();
+    let html = '';
+
+    // סטטיסטיקות
+    html += `<div class="stats-container">
+        <div class="stat-box"><div class="label">פרויקטים</div><div class="value">${stats.totalProjects}</div></div>
+        <div class="stat-box"><div class="label">משימות</div><div class="value">${stats.totalTasks}</div></div>
+        <div class="stat-box"><div class="label">בביצוע</div><div class="value">${stats.inProgressTasks}</div></div>
+        <div class="stat-box"><div class="label">באיחור</div><div class="value">${stats.overdueTasks}</div></div>
+    </div>`;
+
+    // משימות קרובות - לפי הסינון הנוכחי
+    const taskFilterChip = document.querySelector('#dashboard-page .card:first-child .filter-chip.active');
+    let taskDays = 7;
+    if (taskFilterChip) {
+        const onclickAttr = taskFilterChip.getAttribute('onclick');
+        const match = onclickAttr ? onclickAttr.match(/filterUpcomingTasks\((\d+)/) : null;
+        if (match) taskDays = parseInt(match[1]);
+    }
+
+    let tasks;
+    if (taskDays === 0) {
+        tasks = db.getTasks().filter(t => t.status !== 'completed');
+    } else {
+        const futureDate = new Date();
+        futureDate.setDate(futureDate.getDate() + taskDays);
+        const futureDateStr = futureDate.toISOString().split('T')[0];
+        tasks = db.getTasks().filter(t =>
+            t.status !== 'completed' && t.dueDate && t.dueDate <= futureDateStr
+        );
+    }
+    tasks.sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate));
+
+    if (tasks.length > 0) {
+        html += '<h3>משימות קרובות</h3>';
+        html += '<table><thead><tr><th>שם המשימה</th><th>פרויקט</th><th>תאריך יעד</th></tr></thead><tbody>';
+        tasks.forEach(t => {
+            const project = db.getProjectById(t.projectId);
+            html += `<tr><td>${t.name}</td><td>${project ? project.name : '-'}</td><td>${formatDate(t.dueDate)}</td></tr>`;
+        });
+        html += '</tbody></table>';
+    }
+
+    // פרויקטים - לפי הסינון הנוכחי
+    const projectFilterChip = document.querySelector('#dashboard-page .card:last-child .filter-chip.active');
+    let projectDays = 0;
+    if (projectFilterChip) {
+        const onclickAttr = projectFilterChip.getAttribute('onclick');
+        const match = onclickAttr ? onclickAttr.match(/filterUpcomingProjects\((\d+)/) : null;
+        if (match) projectDays = parseInt(match[1]);
+    }
+
+    let projects = db.getActiveProjects();
+    if (projectDays > 0) {
+        const futureDate = new Date();
+        futureDate.setDate(futureDate.getDate() + projectDays);
+        const futureDateStr = futureDate.toISOString().split('T')[0];
+        projects = projects.filter(p => p.endDate && p.endDate <= futureDateStr);
+    }
+
+    if (projects.length > 0) {
+        html += '<h3>פרויקטים</h3>';
+        html += '<table><thead><tr><th>שם הפרויקט</th><th>מנהל</th><th>סטטוס</th></tr></thead><tbody>';
+        projects.forEach(p => {
+            const manager = db.getEmployeeById(p.managerId);
+            html += `<tr><td>${p.name}</td><td>${manager ? manager.name : '-'}</td><td>${getStatusText(p.status)}</td></tr>`;
+        });
+        html += '</tbody></table>';
+    }
+
+    return html;
+}

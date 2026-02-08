@@ -263,25 +263,27 @@ body {
     font-size: 0.82rem;
 }
 
-.header-user {
+.header-print-btn {
     display: flex;
     align-items: center;
-    gap: 8px;
-    padding: 6px 14px;
+    gap: 6px;
+    padding: 6px 16px;
     background: var(--bg-card);
     border-radius: var(--radius-lg);
     border: 1px solid var(--border-color);
     box-shadow: var(--shadow-xs);
-    font-size: 0.88rem;
-}
-
-.user-avatar {
-    font-size: 1.3rem;
-}
-
-.user-name {
+    font-family: inherit;
+    font-size: 0.85rem;
     font-weight: 500;
     color: var(--text-primary);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.header-print-btn:hover {
+    background: var(--primary-color);
+    color: white;
+    border-color: var(--primary-color);
 }
 
 /* =========================================
