@@ -872,13 +872,10 @@ function loadProjects() {
         html += `
             <div class="project-group">
                 <div class="project-group-header">
-                    <span class="project-group-icon">👤</span>
                     <span class="project-group-name">${managerName}</span>
                     <span class="project-group-count">${managerProjects.length} פרויקטים</span>
                 </div>
-                <div class="project-group-cards">
-                    ${renderProjectCards(managerProjects)}
-                </div>
+                ${renderProjectTable(managerProjects)}
             </div>
         `;
     });
@@ -888,13 +885,10 @@ function loadProjects() {
         html += `
             <div class="project-group">
                 <div class="project-group-header">
-                    <span class="project-group-icon">📁</span>
                     <span class="project-group-name">ללא מנהל</span>
                     <span class="project-group-count">${noManager.length} פרויקטים</span>
                 </div>
-                <div class="project-group-cards">
-                    ${renderProjectCards(noManager)}
-                </div>
+                ${renderProjectTable(noManager)}
             </div>
         `;
     }
@@ -902,49 +896,46 @@ function loadProjects() {
     container.innerHTML = html;
 }
 
-function renderProjectCards(projects) {
-    return projects.map(project => {
-        const manager = db.getEmployeeById(project.managerId);
+function renderProjectTable(projects) {
+    const rows = projects.map(project => {
         const taskCount = db.getTasksByProject(project.id).length;
         const daysInfo = getDaysRemaining(project.endDate);
+        const desc = project.description ? (project.description.length > 40 ? project.description.substring(0, 40) + '...' : project.description) : '-';
 
         return `
-            <div class="project-card">
-                <div class="project-card-header clickable-header" onclick="viewProjectTasks('${project.id}')" title="לחץ לצפייה במשימות">
-                    <div class="project-card-title">
-                        <h4>${project.name}</h4>
-                    </div>
-                    <span class="status-badge status-${project.status}">${getStatusText(project.status)}</span>
-                </div>
-                <div class="project-card-body">
-                    <p class="project-description">${project.description || 'ללא תיאור'}</p>
-                    <div class="project-meta">
-                        <div class="project-meta-item">
-                            <span>📅</span>
-                            <span>התחלה: ${formatDate(project.startDate)}</span>
-                        </div>
-                        <div class="project-meta-item">
-                            <span>🎯</span>
-                            <span>יעד: ${formatDate(project.endDate)}</span>
-                        </div>
-                        <div class="project-meta-item">
-                            <span>✅</span>
-                            <span>${taskCount} משימות</span>
-                        </div>
-                    </div>
-                </div>
-                <div class="project-card-footer">
-                    <div class="project-days-info">
-                        <span class="days-remaining ${daysInfo.className}">${daysInfo.text}</span>
-                    </div>
-                    <div class="project-actions">
-                        <button class="btn btn-secondary btn-icon" onclick="openProjectModal('${project.id}')" title="ערוך">✏️</button>
-                        <button class="btn btn-secondary btn-icon" onclick="openDeleteModal('project', '${project.id}', '${project.name}')" title="מחק">🗑️</button>
-                    </div>
-                </div>
-            </div>
+            <tr class="project-row-clickable" onclick="viewProjectTasks('${project.id}')">
+                <td class="project-table-name">${project.name}</td>
+                <td class="project-table-desc">${desc}</td>
+                <td>${formatDate(project.endDate)}</td>
+                <td>${taskCount}</td>
+                <td><span class="days-remaining ${daysInfo.className}">${daysInfo.text}</span></td>
+                <td><span class="status-badge status-${project.status}">${getStatusText(project.status)}</span></td>
+                <td class="project-table-actions" onclick="event.stopPropagation()">
+                    <button class="btn btn-secondary btn-icon" onclick="openProjectModal('${project.id}')" title="ערוך">✏️</button>
+                    <button class="btn btn-secondary btn-icon" onclick="openDeleteModal('project', '${project.id}', '${project.name}')" title="מחק">🗑️</button>
+                </td>
+            </tr>
         `;
     }).join('');
+
+    return `
+        <table class="projects-table">
+            <thead>
+                <tr>
+                    <th>שם הפרויקט</th>
+                    <th>תיאור</th>
+                    <th>תאריך יעד</th>
+                    <th>משימות</th>
+                    <th>ימים נותרים</th>
+                    <th>סטטוס</th>
+                    <th>פעולות</th>
+                </tr>
+            </thead>
+            <tbody>
+                ${rows}
+            </tbody>
+        </table>
+    `;
 }
 
 // ============================================
