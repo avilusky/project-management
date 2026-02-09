@@ -1279,6 +1279,10 @@ function updateDate() {
 function formatDate(dateStr) {
     if (!dateStr) return '';
     const date = new Date(dateStr);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const diffDays = Math.ceil((date - today) / (1000 * 60 * 60 * 24));
+    if (diffDays > 1825) return '∞';
     return date.toLocaleDateString('he-IL', { day: 'numeric', month: 'short', year: 'numeric' });
 }
 
