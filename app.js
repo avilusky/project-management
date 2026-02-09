@@ -818,7 +818,12 @@ function loadProjects() {
     const selectedManager = managerFilter.value;
 
     // סינון פרויקטים
-    let projects = db.getProjectsByStatus(statusFilter);
+    let projects;
+    if (statusFilter === 'not-completed') {
+        projects = db.getProjects().filter(p => p.status !== 'completed');
+    } else {
+        projects = db.getProjectsByStatus(statusFilter);
+    }
     if (selectedManager !== 'all') {
         projects = projects.filter(p => p.managerId === selectedManager);
     }
@@ -991,7 +996,9 @@ function loadTasks() {
     if (selectedProject !== 'all') {
         filteredTasks = filteredTasks.filter(t => t.projectId === selectedProject);
     }
-    if (selectedStatus !== 'all') {
+    if (selectedStatus === 'not-completed') {
+        filteredTasks = filteredTasks.filter(t => t.status !== 'completed');
+    } else if (selectedStatus !== 'all') {
         filteredTasks = filteredTasks.filter(t => t.status === selectedStatus);
     }
     if (selectedEmployee !== 'all') {
@@ -1029,6 +1036,7 @@ function loadTasks() {
         availableProjects = availableProjects.filter(p => p.managerId === selectedManager);
     }
 
+    availableProjects.sort((a, b) => a.name.localeCompare(b.name, 'he'));
     projectFilter.innerHTML = '<option value="all">הכל</option>';
     availableProjects.forEach(project => {
         projectFilter.innerHTML += `<option value="${project.id}">${project.name}</option>`;
@@ -1055,13 +1063,14 @@ function loadTasks() {
     const allEmployees = db.getAllWorkersAndManagers();
     const availableEmployees = allEmployees.filter(emp => relevantEmployeeIds.includes(emp.id));
 
+    const sortByName = (a, b) => a.name.localeCompare(b.name, 'he');
     employeeFilter.innerHTML = '<option value="all">הכל</option>';
     if (allTasks.length === 0) {
-        allEmployees.forEach(emp => {
+        allEmployees.sort(sortByName).forEach(emp => {
             employeeFilter.innerHTML += `<option value="${emp.id}">${emp.name}</option>`;
         });
     } else {
-        availableEmployees.forEach(emp => {
+        availableEmployees.sort(sortByName).forEach(emp => {
             employeeFilter.innerHTML += `<option value="${emp.id}">${emp.name}</option>`;
         });
     }
@@ -1439,7 +1448,12 @@ function buildProjectsPrintTable() {
     const selectedManager = document.getElementById('project-manager-filter').value;
     const projectDaysFilter = document.getElementById('project-days-filter').value;
 
-    let projects = db.getProjectsByStatus(statusFilter);
+    let projects;
+    if (statusFilter === 'not-completed') {
+        projects = db.getProjects().filter(p => p.status !== 'completed');
+    } else {
+        projects = db.getProjectsByStatus(statusFilter);
+    }
     if (selectedManager !== 'all') {
         projects = projects.filter(p => p.managerId === selectedManager);
     }
@@ -1546,7 +1560,9 @@ function buildTasksPrintTable() {
     if (selectedProject !== 'all') {
         tasks = tasks.filter(t => t.projectId === selectedProject);
     }
-    if (selectedStatus !== 'all') {
+    if (selectedStatus === 'not-completed') {
+        tasks = tasks.filter(t => t.status !== 'completed');
+    } else if (selectedStatus !== 'all') {
         tasks = tasks.filter(t => t.status === selectedStatus);
     }
     if (selectedEmployee !== 'all') {
