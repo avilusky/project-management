@@ -1377,7 +1377,7 @@ function printCurrentPage() {
             <style>
                 body { font-family: Arial, sans-serif; padding: 20px; direction: rtl; }
                 h2 { text-align: center; margin-bottom: 20px; }
-                table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+                table { width: 100%; border-collapse: collapse; margin-bottom: 20px; direction: rtl; }
                 th, td { border: 1px solid #333; padding: 6px 10px; text-align: right; font-size: 13px; }
                 th { background: #eee; font-weight: bold; }
                 .stats-container { display: flex; gap: 20px; justify-content: center; margin-bottom: 20px; flex-wrap: wrap; }
