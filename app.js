@@ -1453,30 +1453,74 @@ function buildProjectsPrintTable() {
 
     if (projects.length === 0) return '<p>אין פרויקטים להצגה</p>';
 
-    let rows = projects.map(p => {
+    // קיבוץ לפי מנהל
+    const grouped = {};
+    const noManager = [];
+    projects.forEach(p => {
+        if (p.managerId) {
+            if (!grouped[p.managerId]) grouped[p.managerId] = [];
+            grouped[p.managerId].push(p);
+        } else {
+            noManager.push(p);
+        }
+    });
+
+    // סדר מנהלים קבוע
+    const managerOrder = ['e2', 'e3', 'e4'];
+    const managerIds = Object.keys(grouped);
+    managerIds.sort((a, b) => {
+        const indexA = managerOrder.indexOf(a);
+        const indexB = managerOrder.indexOf(b);
+        if (indexA !== -1 && indexB !== -1) return indexA - indexB;
+        if (indexA !== -1) return -1;
+        if (indexB !== -1) return 1;
+        const mA = db.getEmployeeById(a);
+        const mB = db.getEmployeeById(b);
+        return (mA ? mA.name : '').localeCompare(mB ? mB.name : '', 'he');
+    });
+
+    const sortByDate = (arr) => arr.sort((a, b) => {
+        const dateA = a.endDate ? new Date(a.endDate) : new Date('9999-12-31');
+        const dateB = b.endDate ? new Date(b.endDate) : new Date('9999-12-31');
+        return dateA - dateB;
+    });
+
+    const buildRows = (arr) => arr.map(p => {
         const taskCount = db.getTasksByProject(p.id).length;
-        const manager = db.getEmployeeById(p.managerId);
+        const daysInfo = getDaysRemaining(p.endDate);
         return `<tr>
             <td>${p.name}</td>
             <td>${p.description || '-'}</td>
-            <td>${manager ? manager.name : '-'}</td>
             <td>${formatDate(p.endDate)}</td>
+            <td>${daysInfo.text}</td>
             <td>${taskCount}</td>
             <td>${getStatusText(p.status)}</td>
         </tr>`;
     }).join('');
 
-    return `<table>
-        <thead><tr>
-            <th>שם הפרויקט</th>
-            <th>תיאור</th>
-            <th>מנהל</th>
-            <th>תאריך יעד</th>
-            <th>משימות</th>
-            <th>סטטוס</th>
-        </tr></thead>
-        <tbody>${rows}</tbody>
-    </table>`;
+    const tableHeader = `<thead><tr>
+        <th>שם הפרויקט</th>
+        <th>תיאור</th>
+        <th>תאריך יעד</th>
+        <th>ימים נותרים</th>
+        <th>משימות</th>
+        <th>סטטוס</th>
+    </tr></thead>`;
+
+    let html = '';
+    managerIds.forEach(id => {
+        const manager = db.getEmployeeById(id);
+        const managerName = manager ? manager.name : 'לא ידוע';
+        html += `<h3>👨‍💼 ${managerName}</h3>`;
+        html += `<table>${tableHeader}<tbody>${buildRows(sortByDate(grouped[id]))}</tbody></table>`;
+    });
+
+    if (noManager.length > 0) {
+        html += `<h3>ללא מנהל</h3>`;
+        html += `<table>${tableHeader}<tbody>${buildRows(sortByDate(noManager))}</tbody></table>`;
+    }
+
+    return html;
 }
 
 function buildTasksPrintTable() {
