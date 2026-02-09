@@ -245,13 +245,20 @@ function openTaskModal(taskId = null) {
     const modal = document.getElementById('task-modal');
     const title = document.getElementById('task-modal-title');
     const form = document.getElementById('task-form');
-    const departmentSelect = document.getElementById('task-department');
+    const managerSelect = document.getElementById('task-manager-select');
 
-    // הגדרת מאזין לשינוי מחלקה - סינון פרויקטים
-    departmentSelect.onchange = function () {
-        const selectedDept = departmentSelect.value;
+    // טעינת רשימת מנהלים
+    const managers = db.getManagers();
+    managerSelect.innerHTML = '<option value="">בחר מנהל</option>';
+    managers.forEach(m => {
+        managerSelect.innerHTML += `<option value="${m.id}">${m.name}</option>`;
+    });
+
+    // הגדרת מאזין לשינוי מנהל - סינון פרויקטים
+    managerSelect.onchange = function () {
+        const selectedManager = managerSelect.value;
         const currentProjectValue = document.getElementById('task-project').value;
-        loadProjectsSelect('task-project', selectedDept);
+        loadProjectsSelect('task-project', '', selectedManager);
         // נסיון לשמר את הפרויקט הנבחר אם עדיין קיים ברשימה
         document.getElementById('task-project').value = currentProjectValue;
         if (!document.getElementById('task-project').value) {
@@ -267,13 +274,13 @@ function openTaskModal(taskId = null) {
         document.getElementById('task-name').value = task.name;
         document.getElementById('task-description').value = task.description || '';
 
-        // בעריכה - נקבע את המחלקה לפי הפרויקט הנוכחי
+        // בעריכה - נקבע את המנהל לפי הפרויקט הנוכחי
         const project = db.getProjectById(task.projectId);
-        if (project && project.department) {
-            departmentSelect.value = project.department;
-            loadProjectsSelect('task-project', project.department);
+        if (project && project.managerId) {
+            managerSelect.value = project.managerId;
+            loadProjectsSelect('task-project', '', project.managerId);
         } else {
-            departmentSelect.value = '';
+            managerSelect.value = '';
             loadProjectsSelect('task-project');
         }
 
@@ -292,9 +299,9 @@ function openTaskModal(taskId = null) {
         form.reset();
         document.getElementById('task-id').value = '';
         document.getElementById('task-start-date').value = new Date().toISOString().split('T')[0];
-        departmentSelect.value = '';
+        managerSelect.value = '';
 
-        // טעינת כל הפרויקטים (בלי סינון מחלקה)
+        // טעינת כל הפרויקטים (בלי סינון מנהל)
         loadProjectsSelect('task-project');
 
         // טעינת עובדים
@@ -569,13 +576,18 @@ function loadManagersSelect(selectId) {
     });
 }
 
-function loadProjectsSelect(selectId, department = '') {
+function loadProjectsSelect(selectId, department = '', managerId = '') {
     const select = document.getElementById(selectId);
     let projects = db.getActiveProjects();
 
     // סינון לפי מחלקה אם נבחרה
     if (department) {
         projects = projects.filter(p => p.department === department);
+    }
+
+    // סינון לפי מנהל אם נבחר
+    if (managerId) {
+        projects = projects.filter(p => p.managerId === managerId);
     }
 
     select.innerHTML = '<option value="">בחר פרויקט</option>';
@@ -1335,6 +1347,11 @@ function getDaysRemaining(dateStr) {
         return {
             text: `⚡ עוד ${diffDays} ימים`,
             className: 'warning'
+        };
+    } else if (diffDays > 1825) {
+        return {
+            text: '∞',
+            className: 'normal'
         };
     } else {
         return {
