@@ -472,6 +472,11 @@ async function saveProject() {
 }
 
 async function saveTask() {
+    const managerSelected = document.getElementById('task-manager-select').value;
+    if (!managerSelected) {
+        alert('יש לבחור מנהל אחראי');
+        return;
+    }
     const id = document.getElementById('task-id').value;
     const task = {
         name: document.getElementById('task-name').value,
