@@ -644,6 +644,10 @@ body {
     font-size: 0.85rem;
     cursor: pointer;
     transition: all var(--transition-fast);
+    max-width: 160px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .filter-group select:focus {
@@ -806,6 +810,10 @@ body {
 .project-table-name {
     font-weight: 600;
     color: var(--primary-color);
+    max-width: 180px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .project-table-desc {
@@ -946,16 +954,27 @@ body {
 .task-name-cell {
     font-weight: 500;
     color: var(--text-primary);
+    max-width: 180px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .task-project-cell {
     color: var(--text-muted);
     font-size: 0.85rem;
+    max-width: 150px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .task-assignee-cell {
     white-space: nowrap;
     color: var(--text-secondary);
+    max-width: 120px;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .task-assignee-avatar {

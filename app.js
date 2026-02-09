@@ -864,9 +864,17 @@ function loadProjects() {
         return (mA ? mA.name : '').localeCompare(mB ? mB.name : '', 'he');
     });
 
+    const sortByDaysRemaining = (projects) => {
+        return projects.sort((a, b) => {
+            const dateA = a.endDate ? new Date(a.endDate) : new Date('9999-12-31');
+            const dateB = b.endDate ? new Date(b.endDate) : new Date('9999-12-31');
+            return dateA - dateB;
+        });
+    };
+
     managerIds.forEach(managerId => {
         const manager = db.getEmployeeById(managerId);
-        const managerProjects = grouped[managerId];
+        const managerProjects = sortByDaysRemaining(grouped[managerId]);
         const managerName = manager ? manager.name : 'לא ידוע';
 
         html += `
@@ -888,7 +896,7 @@ function loadProjects() {
                     <span class="project-group-name">ללא מנהל</span>
                     <span class="project-group-count">${noManager.length} פרויקטים</span>
                 </div>
-                ${renderProjectTable(noManager)}
+                ${renderProjectTable(sortByDaysRemaining(noManager))}
             </div>
         `;
     }
