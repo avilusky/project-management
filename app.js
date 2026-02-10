@@ -935,7 +935,7 @@ function renderProjectTable(projects) {
         return `
             <tr class="project-row-clickable" onclick="viewProjectTasks('${project.id}')">
                 <td class="project-table-name">${project.name}</td>
-                <td class="project-table-desc">${desc}</td>
+                <td class="project-table-desc" onclick="event.stopPropagation(); openProjectModal('${project.id}')" title="לחץ לעריכה">${desc}</td>
                 <td>${formatDate(project.endDate)}</td>
                 <td>${taskCount}</td>
                 <td><span class="days-remaining ${daysInfo.className}">${daysInfo.text}</span></td>
