@@ -12,7 +12,7 @@ let currentDeleteTarget = null;
 let currentDeleteType = null;
 
 // מיון טבלת משימות
-let taskSortColumn = null;
+let taskSortColumn = 'daysRemaining';
 let taskSortDirection = 'asc'; // 'asc' או 'desc'
 
 // ============================================
@@ -783,7 +783,7 @@ function viewEmployeeTasks(employeeId) {
 window.viewEmployeeTasks = viewEmployeeTasks;
 
 function resetProjectFilters() {
-    document.getElementById('project-status-filter').value = 'all';
+    document.getElementById('project-status-filter').value = 'not-completed';
     document.getElementById('project-manager-filter').value = 'all';
     document.getElementById('project-days-filter').value = '';
     loadProjects();
@@ -793,7 +793,7 @@ window.resetProjectFilters = resetProjectFilters;
 function resetTaskFilters() {
     document.getElementById('task-manager-filter').value = 'all';
     document.getElementById('task-project-filter').value = 'all';
-    document.getElementById('task-status-filter').value = 'all';
+    document.getElementById('task-status-filter').value = 'not-completed';
     document.getElementById('task-employee-filter').value = 'all';
     document.getElementById('task-days-filter').value = '';
     loadTasks();
@@ -1060,7 +1060,9 @@ function loadTasks() {
     if (selectedProject !== 'all') {
         relevantTasksForEmployees = relevantTasksForEmployees.filter(t => t.projectId === selectedProject);
     }
-    if (selectedStatus !== 'all') {
+    if (selectedStatus === 'not-completed') {
+        relevantTasksForEmployees = relevantTasksForEmployees.filter(t => t.status !== 'completed');
+    } else if (selectedStatus !== 'all') {
         relevantTasksForEmployees = relevantTasksForEmployees.filter(t => t.status === selectedStatus);
     }
 
