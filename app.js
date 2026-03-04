@@ -155,10 +155,11 @@ function initModals() {
         });
     });
 
-    // סגירה בלחיצה על הרקע
+    // סגירה בלחיצה על הרקע (לא חל על דיאלוגי עריכה של פרויקט ומשימה)
+    const editModals = ['project-modal', 'task-modal'];
     document.querySelectorAll('.modal').forEach(modal => {
         modal.addEventListener('click', (e) => {
-            if (e.target === modal) {
+            if (e.target === modal && !editModals.includes(modal.id)) {
                 closeModal(modal.id);
             }
         });
@@ -929,7 +930,7 @@ function loadProjects() {
 function renderProjectTable(projects) {
     const rows = projects.map(project => {
         const taskCount = db.getTasksByProject(project.id).length;
-        const daysInfo = getDaysRemaining(project.endDate);
+        const daysInfo = project.status === 'completed' ? { text: 'הושלם ✓', className: 'normal' } : getDaysRemaining(project.endDate);
         const desc = project.description ? (project.description.length > 40 ? project.description.substring(0, 40) + '...' : project.description) : '-';
 
         return `
