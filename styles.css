@@ -1376,6 +1376,19 @@ form {
 #project-modal .modal-content,
 #task-modal .modal-content {
     max-width: 50vw;
+    background: #f0f4fb;
+}
+
+#project-modal .modal-header,
+#project-modal .modal-footer,
+#task-modal .modal-header,
+#task-modal .modal-footer {
+    background: transparent;
+}
+
+#project-modal form,
+#task-modal form {
+    background: transparent;
 }
 
 .task-view-body {
