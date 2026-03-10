@@ -62,7 +62,7 @@ class Database {
             { id: 'e2', name: 'אבי לוסקי', role: 'מנהל מחלקת ביטוח סיעודי', department: 'ביטוח סיעודי', isManager: true, parentId: 'e1' },
             { id: 'e2_1', name: 'דותן כהן', role: 'עובד', department: 'ביטוח סיעודי', isManager: false, parentId: 'e2' },
             { id: 'e2_2', name: 'שרה נקמולי', role: 'עובד', department: 'ביטוח סיעודי', isManager: false, parentId: 'e2' },
-            { id: 'e2_3', name: 'שהם בך', role: 'עובד', department: 'ביטוח סיעודי', isManager: false, parentId: 'e2' },
+            { id: 'e2_3', name: 'שוהם בך', role: 'עובד', department: 'ביטוח סיעודי', isManager: false, parentId: 'e2' },
 
             // מחלקת ביטוחי בריאות
             { id: 'e3', name: 'שירה עמיאור', role: 'מנהלת מחלקת ביטוחי בריאות', department: 'ביטוחי בריאות', isManager: true, parentId: 'e1' },
