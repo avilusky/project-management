@@ -67,7 +67,7 @@ class Database {
             // מחלקת ביטוחי בריאות
             { id: 'e3', name: 'שירה עמיאור', role: 'מנהלת מחלקת ביטוחי בריאות', department: 'ביטוחי בריאות', isManager: true, parentId: 'e1' },
             { id: 'e3_1', name: 'מיכל צ\'רנוביל', role: 'עובד', department: 'ביטוחי בריאות', isManager: false, parentId: 'e3' },
-            { id: 'e3_2', name: 'עובד חדש 2', role: 'עובד', department: 'ביטוחי בריאות', isManager: false, parentId: 'e3' },
+            { id: 'e3_2', name: 'נועם בנמוזיג', role: 'עובד', department: 'ביטוחי בריאות', isManager: false, parentId: 'e3' },
             { id: 'e3_3', name: 'עובד חדש 3', role: 'עובד', department: 'ביטוחי בריאות', isManager: false, parentId: 'e3' },
 
             // מחלקת ביקורת בריאות
