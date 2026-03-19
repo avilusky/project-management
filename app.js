@@ -741,7 +741,7 @@ function viewProjectTasks(projectId) {
     projectFilter.value = projectId;
 
     // 2. איפוס שאר הפילטרים
-    document.getElementById('task-status-filter').value = 'all';
+    document.getElementById('task-status-filter').value = 'not-completed';
     document.getElementById('task-employee-filter').value = 'all';
 
     // 3. מעבר לטאב משימות
