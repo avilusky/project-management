@@ -42,18 +42,23 @@ class Database {
     }
 
     async resetAndSeedFixedData() {
-        // פונקציה זו מוחקת את כל העובדים ויוצרת מחדש את הרשימה הקבועה
-        const { doc, setDoc, collection, getDocs, deleteDoc } = this.utils;
+        // פונקציה זו בודקת אם כבר יש עובדים ב-Firestore
+        // אם כן - מדלגת (חוסכת ~33 פעולות קריאה/כתיבה בכל טעינה)
+        // אם לא - יוצרת את הרשימה הקבועה פעם אחת בלבד
+        const { doc, setDoc, collection, getDocs } = this.utils;
 
-        console.log('Resetting and seeding fixed employee data...');
-
-        // 1. מחיקת כל העובדים הקיימים
+        // בדיקה אם כבר קיימים עובדים (קריאה אחת בלבד)
         const employeesRef = collection(this.db, 'employees');
         const snapshot = await getDocs(employeesRef);
-        const deletePromises = snapshot.docs.map(d => deleteDoc(doc(this.db, 'employees', d.id)));
-        await Promise.all(deletePromises);
 
-        // 2. הגדרת הרשימה הקבועה
+        if (snapshot.size > 0) {
+            console.log('Employees already exist, skipping seed.');
+            return;
+        }
+
+        console.log('First time setup - seeding fixed employee data...');
+
+        // הגדרת הרשימה הקבועה
         const fixedEmployees = [
             // מנהל חטיבה (חייב להישאר כדי לשמור על המבנה)
             { id: 'e1', name: 'אבי עובדיה', role: 'מנהל חטיבה', department: 'הנהלה', isManager: true, parentId: null },
@@ -185,29 +190,26 @@ class Database {
     }
 
     async deleteEmployee(id) {
-        const { doc, deleteDoc, collection, getDocs, query, where, updateDoc } = this.utils;
+        const { doc, deleteDoc, updateDoc } = this.utils;
 
-        // 1. עדכון עובדים שכפופים לעובד שנמחק (הסרת המנהל שלהם)
-        const teamQuery = query(collection(this.db, 'employees'), where('parentId', '==', id));
-        const teamSnapshot = await getDocs(teamQuery);
-        const updatepromises = teamSnapshot.docs.map(empDoc =>
-            updateDoc(doc(this.db, 'employees', empDoc.id), { parentId: null })
+        // 1. עדכון עובדים שכפופים לעובד שנמחק (סינון מהזיכרון במקום שאילתת Firestore)
+        const teamMembers = this.employees.filter(e => e.parentId === id);
+        const updatePromises = teamMembers.map(emp =>
+            updateDoc(doc(this.db, 'employees', emp.id), { parentId: null })
         );
-        await Promise.all(updatepromises);
+        await Promise.all(updatePromises);
 
-        // 2. עדכון פרויקטים שהעובד מנהל (הסרת המנהל)
-        const projectsQuery = query(collection(this.db, 'projects'), where('managerId', '==', id));
-        const projectsSnapshot = await getDocs(projectsQuery);
-        const projectPromises = projectsSnapshot.docs.map(pDoc =>
-            updateDoc(doc(this.db, 'projects', pDoc.id), { managerId: null })
+        // 2. עדכון פרויקטים שהעובד מנהל (סינון מהזיכרון)
+        const managedProjects = this.projects.filter(p => p.managerId === id);
+        const projectPromises = managedProjects.map(p =>
+            updateDoc(doc(this.db, 'projects', p.id), { managerId: null })
         );
         await Promise.all(projectPromises);
 
-        // 3. עדכון משימות שהעובד אחראי עליהן (הסרת האחראי)
-        const tasksQuery = query(collection(this.db, 'tasks'), where('assigneeId', '==', id));
-        const tasksSnapshot = await getDocs(tasksQuery);
-        const taskPromises = tasksSnapshot.docs.map(tDoc =>
-            updateDoc(doc(this.db, 'tasks', tDoc.id), { assigneeId: null })
+        // 3. עדכון משימות שהעובד אחראי עליהן (סינון מהזיכרון)
+        const assignedTasks = this.tasks.filter(t => t.assigneeId === id);
+        const taskPromises = assignedTasks.map(t =>
+            updateDoc(doc(this.db, 'tasks', t.id), { assigneeId: null })
         );
         await Promise.all(taskPromises);
 
