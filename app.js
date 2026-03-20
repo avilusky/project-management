@@ -621,7 +621,7 @@ function loadDashboard() {
 
     // עדכון סטטיסטיקות
     document.getElementById('total-projects').textContent = stats.totalProjects;
-    document.getElementById('total-tasks').textContent = stats.totalTasks;
+    document.getElementById('pending-tasks').textContent = stats.pendingTasks;
     document.getElementById('in-progress-tasks').textContent = stats.inProgressTasks;
     document.getElementById('overdue-tasks').textContent = stats.overdueTasks;
 
@@ -1667,10 +1667,10 @@ function buildDashboardPrintTable() {
 
     // סטטיסטיקות
     html += `<div class="stats-container">
-        <div class="stat-box"><div class="label">פרויקטים</div><div class="value">${stats.totalProjects}</div></div>
-        <div class="stat-box"><div class="label">משימות</div><div class="value">${stats.totalTasks}</div></div>
-        <div class="stat-box"><div class="label">בביצוע</div><div class="value">${stats.inProgressTasks}</div></div>
-        <div class="stat-box"><div class="label">באיחור</div><div class="value">${stats.overdueTasks}</div></div>
+        <div class="stat-box"><div class="label">פרויקטים פעילים</div><div class="value">${stats.totalProjects}</div></div>
+        <div class="stat-box"><div class="label">משימות בביצוע</div><div class="value">${stats.inProgressTasks}</div></div>
+        <div class="stat-box"><div class="label">משימות בהמתנה</div><div class="value">${stats.pendingTasks}</div></div>
+        <div class="stat-box"><div class="label">משימות באיחור</div><div class="value">${stats.overdueTasks}</div></div>
     </div>`;
 
     // משימות קרובות - לפי הסינון הנוכחי

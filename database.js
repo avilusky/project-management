@@ -302,6 +302,10 @@ class Database {
         return this.tasks.filter(t => t.status === 'in-progress');
     }
 
+    getPendingTasks() {
+        return this.tasks.filter(t => t.status === 'pending');
+    }
+
     getOverdueTasks() {
         const today = new Date().toISOString().split('T')[0];
         return this.tasks.filter(t => t.dueDate < today && t.status !== 'completed');
@@ -349,7 +353,7 @@ class Database {
     getStats() {
         return {
             totalProjects: this.getActiveProjects().length,
-            totalTasks: this.tasks.length,
+            pendingTasks: this.getPendingTasks().length,
             inProgressTasks: this.getInProgressTasks().length,
             overdueTasks: this.getOverdueTasks().length
         };

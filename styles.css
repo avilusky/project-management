@@ -364,11 +364,11 @@ body {
 }
 
 .stat-tasks::before {
-    background: linear-gradient(90deg, #10b981, #34d399);
+    background: linear-gradient(90deg, #f59e0b, #fbbf24);
 }
 
 .stat-progress::before {
-    background: linear-gradient(90deg, #f59e0b, #fbbf24);
+    background: linear-gradient(90deg, #10b981, #34d399);
 }
 
 .stat-overdue::before {
