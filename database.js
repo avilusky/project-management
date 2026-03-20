@@ -226,8 +226,18 @@ class Database {
         return this.projects;
     }
 
+    // פרויקטים שמשמשים כסל למשימות כלליות - לא יוצגו בדשבורד ובKPI
+    isPlaceholderProject(project) {
+        return project.name && project.name.startsWith('ללא פרויקט');
+    }
+
     getActiveProjects() {
         return this.projects.filter(p => p.status === 'active');
+    }
+
+    // פרויקטים פעילים ללא פרויקטי סל (לדשבורד)
+    getDisplayProjects() {
+        return this.projects.filter(p => p.status === 'active' && !this.isPlaceholderProject(p));
     }
 
     getProjectById(id) {
@@ -354,7 +364,7 @@ class Database {
 
     getStats() {
         return {
-            totalProjects: this.getActiveProjects().length,
+            totalProjects: this.getDisplayProjects().length,
             pendingTasks: this.getPendingTasks().length,
             inProgressTasks: this.getInProgressTasks().length,
             overdueTasks: this.getOverdueTasks().length

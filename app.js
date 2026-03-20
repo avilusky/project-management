@@ -684,11 +684,11 @@ window.filterUpcomingTasks = filterUpcomingTasks;
 
 function loadRecentProjects(days = 0) {
     const container = document.getElementById('recent-projects-list');
-    const allProjects = db.getActiveProjects();
+    const allProjects = db.getDisplayProjects();
 
     let projects;
     if (days === 0) {
-        // הכל - כל הפרויקטים הפעילים
+        // הכל - כל הפרויקטים הפעילים (ללא פרויקטי סל)
         projects = allProjects;
     } else {
         const futureDate = new Date();
@@ -1733,7 +1733,7 @@ function buildDashboardPrintTable() {
         if (match) projectDays = parseInt(match[1]);
     }
 
-    let projects = db.getActiveProjects();
+    let projects = db.getDisplayProjects();
     if (projectDays > 0) {
         const futureDate = new Date();
         futureDate.setDate(futureDate.getDate() + projectDays);
