@@ -727,15 +727,16 @@ function filterUpcomingProjects(days, btn) {
 window.filterUpcomingProjects = filterUpcomingProjects;
 
 function viewProjectTasks(projectId) {
-    // 1. עדכון הפילטר
+    // 1. עדכון הפילטר - תמיד וודא שהפרויקט קיים כאופציה
     const projectFilter = document.getElementById('task-project-filter');
 
-    // אם הפילטר עדיין לא נטען, נטען אותו
-    if (projectFilter.options.length <= 1) {
-        const projects = db.getProjects();
-        projects.forEach(project => {
+    // אם הפרויקט לא קיים בדרופדאון, הוסף אותו
+    const projectExists = Array.from(projectFilter.options).some(opt => opt.value === projectId);
+    if (!projectExists) {
+        const project = db.getProjects().find(p => p.id === projectId);
+        if (project) {
             projectFilter.innerHTML += `<option value="${project.id}">${project.name}</option>`;
-        });
+        }
     }
 
     projectFilter.value = projectId;
@@ -1051,6 +1052,14 @@ function loadTasks() {
     }
     const relevantProjectIds = new Set(tasksForProjectFilter.map(t => t.projectId));
     let availableProjects = db.getProjects().filter(p => relevantProjectIds.has(p.id));
+
+    // אם פרויקט נבחר ואינו ברשימה הרלוונטית — הוסף אותו כדי לשמור על הסינון
+    if (selectedProject !== 'all' && !relevantProjectIds.has(selectedProject)) {
+        const selectedProj = db.getProjects().find(p => p.id === selectedProject);
+        if (selectedProj) {
+            availableProjects.push(selectedProj);
+        }
+    }
 
     availableProjects.sort((a, b) => a.name.localeCompare(b.name, 'he'));
     projectFilter.innerHTML = '<option value="all">הכל</option>';
