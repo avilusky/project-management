@@ -1036,11 +1036,21 @@ function loadTasks() {
     managerFilter.value = selectedManager;
     if (!managerFilter.value) managerFilter.value = 'all';
 
-    // פרויקטים - מסוננים לפי מנהל
-    let availableProjects = db.getProjects();
-    if (selectedManager !== 'all') {
-        availableProjects = availableProjects.filter(p => p.managerId === selectedManager);
+    // פרויקטים - מציג רק פרויקטים שיש בהם משימות התואמות את הסטטוס שנבחר
+    let tasksForProjectFilter = [...allTasks];
+    if (selectedStatus === 'not-completed') {
+        tasksForProjectFilter = tasksForProjectFilter.filter(t => t.status !== 'completed');
+    } else if (selectedStatus !== 'all') {
+        tasksForProjectFilter = tasksForProjectFilter.filter(t => t.status === selectedStatus);
     }
+    if (selectedManager !== 'all') {
+        const managerProjectIds = db.getProjects()
+            .filter(p => p.managerId === selectedManager)
+            .map(p => p.id);
+        tasksForProjectFilter = tasksForProjectFilter.filter(t => managerProjectIds.includes(t.projectId));
+    }
+    const relevantProjectIds = new Set(tasksForProjectFilter.map(t => t.projectId));
+    let availableProjects = db.getProjects().filter(p => relevantProjectIds.has(p.id));
 
     availableProjects.sort((a, b) => a.name.localeCompare(b.name, 'he'));
     projectFilter.innerHTML = '<option value="all">הכל</option>';
